@@ -1,0 +1,2 @@
+# AruDiscordBot
+ Discord Bot, 'Aru'.
