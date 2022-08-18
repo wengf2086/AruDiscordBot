@@ -11,7 +11,7 @@ silentMode = False # if True, plugin will not load.
 @plugin.listener(hikari.GuildMessageCreateEvent) # Declarator for our function
 async def print_message(event):
     if event.content == "ily aru":
-        await plugin.app.rest.create_message(channel = 1009180448003465316, content = "ily2 :3c")
+        await plugin.app.rest.create_message(channel = event.channel_id, content = "ily2 :3c")
     
     print(event.content)
 
