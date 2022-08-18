@@ -19,7 +19,7 @@ async def reactbomb(ctx):
 
     for emoji_str in ctx.options.emojis.split(" "):
         emoji = hikari.Emoji.parse(emoji_str)
-        await plugin.app.rest.add_reaction(channel = channel, message = ctx.options.message_id, emoji = emoji)
+            await plugin.app.rest.add_reaction(channel = channel, message = ctx.options.message_id, emoji = emoji)
                 
 
 
