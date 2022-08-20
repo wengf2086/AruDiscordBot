@@ -9,42 +9,14 @@ import requests
 from bs4 import BeautifulSoup
 
 plugin = lightbulb.Plugin('Commands')
+
+
+
 kirby_react_preset = "<a:kirbeats:1009554827098988574> <a:kirbeatsfast:1009554827992383528> <a:kirbydance:1009554839602204712> <a:kirbydance2:1009554838692044900> <a:kirbyfortnitedance:1009554841963606146> <a:kirbyhi:1009554846967414874> <a:kirbybye:1009554837064650923> <a:kirbyyay:1009554865145528501> <a:kirbyok:1009554850914242754><a:kirbylink:1009554849131675808> <a:kirbyroll:1009554852046700644> <a:kirbyrun:1009554853091082240> <a:kirbyshock:1009554854215168050> <a:kirbyspin:1009554856194867205> <a:kirbyswim:1009554860489842750> <a:kirbyuwu:1009554861739749478> <a:kirbywave:1009554864285683824> <:kirbo:1009554829141606490> <:kirby:1009554833478537377> <:kirbybuffed:1009554836255166474>"
-
-action_files = {
-        'bonk':'action_bonk_gifs.txt',
-        'blush': 'action_blush_gifs.txt',
-        'cuddle': 'action_cuddle_gifs.txt',
-        'highfive': 'action_highfive_gifs.txt',
-        'holdhands': 'action_holdhands_gifs.txt',
-        'hug': 'action_hug_gifs.txt',
-        'kiss': 'action_kiss_gifs.txt',
-        'nom': 'action_nom_gifs.txt',
-        'nuzzle': 'action_nuzzle_gifs.txt',
-        'pat': 'action_pat_gifs.txt',
-        'poke': 'action_poke_gifs.txt',
-        'slap': 'action_slap_gifs.txt',
-        'stare': 'action_stare_gifs.txt', 
-    }
-
-nekos_best_api_actions = {
-    'blush': 'blush',
-    'cuddle': 'cuddle',
-    'holdhands': 'handhold',
-    'highfive': 'highfive',
-    'hug': 'hug',
-    'kiss': 'kiss',
-    'pat': 'pat',
-    'poke': 'poke',
-    'slap': 'slap',
-    'stare': 'stare',
-}
-# Command functions
 @plugin.command
 @lightbulb.option('emojis', 'emojis / preset to be used as reactions. Only default emojis and emojis from this server allowed.', type = str, required = True)
 @lightbulb.option('message_id', 'ID of the message to be bombed. Will bomb most recent message if not specified.', required = False)
 @lightbulb.command('reactbomb', '\'Bombs\' a message with a bunch of (MAX: 20) reactions! emoji presets: \'kirby\'', auto_defer = True)
-
 @lightbulb.implements(lightbulb.SlashCommand)
 async def reactbomb(ctx):
     message = ""
@@ -68,7 +40,25 @@ async def reactbomb(ctx):
 
     await ctx.respond("Success!", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
 
+
+
 # Social Actions
+action_files = {
+        'bonk':'action_bonk_gifs.txt',
+        'blush': 'action_blush_gifs.txt',
+        'cuddle': 'action_cuddle_gifs.txt',
+        'highfive': 'action_highfive_gifs.txt',
+        'holdhands': 'action_holdhands_gifs.txt',
+        'hug': 'action_hug_gifs.txt',
+        'kiss': 'action_kiss_gifs.txt',
+        'nom': 'action_nom_gifs.txt',
+        'nuzzle': 'action_nuzzle_gifs.txt',
+        'pat': 'action_pat_gifs.txt',
+        'poke': 'action_poke_gifs.txt',
+        'slap': 'action_slap_gifs.txt',
+        'stare': 'action_stare_gifs.txt', 
+    }
+
 # Method that extracts a gif from a URL
 def extract_gif_link_from_url(url):
     response = requests.get(url)
@@ -96,7 +86,6 @@ async def add_action(ctx):
     broken_gif_links = []
     for link in gif_links:
         revised_gif_link = link
-        print(revised_gif_link)
         if not revised_gif_link.endswith(".gif"): # if url does not end with ".gif", extract gif link from URL
             revised_gif_link = extract_gif_link_from_url(revised_gif_link)
         
@@ -104,8 +93,9 @@ async def add_action(ctx):
             broken_gif_links.append(revised_gif_link)
         
         else:
-            new_line = str(datetime.datetime.now())[:-7] + '|' + str(ctx.author.id) + '|' + revised_gif_link + '\n'
+            new_line = str(datetime.datetime.now())[:-7] + '|' + str(ctx.author.id) + '|' + revised_gif_link
             f.write(new_line)
+            f.write('\n')
     f.close()
 
     broken_gif_links_string = ""
@@ -134,9 +124,6 @@ async def social_action(ctx):
 # Method called by all action commands
 async def perform_action(ctx, action_name, action_string, response_text):
     gif_file = action_files.get(action_name)
-    custom_gif_count = num_lines = sum(1 for line in open(gif_file))
-    
-
 
     #gif file does not exist. Send error message and return
     if not os.path.exists(gif_file):
