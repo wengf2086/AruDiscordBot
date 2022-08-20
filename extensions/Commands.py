@@ -27,6 +27,18 @@ action_files = {
         'stare': 'action_stare_gifs.txt', 
     }
 
+nekos_best_api_actions = {
+    'blush': 'blush',
+    'cuddle': 'cuddle',
+    'holdhands': 'handhold',
+    'highfive': 'highfive',
+    'hug': 'hug',
+    'kiss': 'kiss',
+    'pat': 'pat',
+    'poke': 'poke',
+    'slap': 'slap',
+    'stare': 'stare',
+}
 # Command functions
 @plugin.command
 @lightbulb.option('emojis', 'emojis / preset to be used as reactions. Only default emojis and emojis from this server allowed.', type = str, required = True)
