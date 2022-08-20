@@ -1,4 +1,5 @@
 from asyncio.windows_events import NULL
+from dataclasses import is_dataclass
 import hikari
 import lightbulb
 import re
@@ -13,6 +14,7 @@ plugin = lightbulb.Plugin('Commands')
 
 
 kirby_react_preset = "<a:kirbeats:1009554827098988574> <a:kirbeatsfast:1009554827992383528> <a:kirbydance:1009554839602204712> <a:kirbydance2:1009554838692044900> <a:kirbyfortnitedance:1009554841963606146> <a:kirbyhi:1009554846967414874> <a:kirbybye:1009554837064650923> <a:kirbyyay:1009554865145528501> <a:kirbyok:1009554850914242754><a:kirbylink:1009554849131675808> <a:kirbyroll:1009554852046700644> <a:kirbyrun:1009554853091082240> <a:kirbyshock:1009554854215168050> <a:kirbyspin:1009554856194867205> <a:kirbyswim:1009554860489842750> <a:kirbyuwu:1009554861739749478> <a:kirbywave:1009554864285683824> <:kirbo:1009554829141606490> <:kirby:1009554833478537377> <:kirbybuffed:1009554836255166474>"
+
 @plugin.command
 @lightbulb.option('emojis', 'emojis / preset to be used as reactions. Only default emojis and emojis from this server allowed.', type = str, required = True)
 @lightbulb.option('message_id', 'ID of the message to be bombed. Will bomb most recent message if not specified.', required = False)
@@ -135,13 +137,40 @@ async def perform_action(ctx, action_name, action_string, response_text):
     actor_member = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = ctx.author)
     recipient_member = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = ctx.options.user)
     
-    embed = hikari.Embed(color = hikari.Color(0xc38ed5))
-    embed.set_image(random_gif[2])
+    embed = hikari.Embed(color = hikari.Color(0xc38ed5)).set_image(random_gif[2])
 
     msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = f"{recipient_member.mention}{action_string}{actor_member.mention}!" , embed = embed)
 
     # Report function
-    await ctx.respond(f"{response_text} This GIF was added by {gif_author.mention} at `{random_gif[0]}`. If this gif is inappropriate, offensive, or broken, report it by adding the :warning: reaction.", flags = hikari.MessageFlag.EPHEMERAL)
+    button = plugin.app.rest.build_action_row().add_button(2, f"report|{msg.id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
+    await ctx.respond(f"{response_text} This GIF was added by {gif_author.mention} at `{random_gif[0]}`.", flags = hikari.MessageFlag.EPHEMERAL, component = button)
+    await respond_to_interaction()
+
+async def respond_to_interaction():
+    event = await plugin.bot.wait_for(hikari.InteractionCreateEvent, timeout = 10)
+    
+    if event.interaction.type == 3: # if interaction is of type MESSAGE_COMPONENT
+         custom_id = event.interaction.custom_id.split("|")
+         if(custom_id[0] == "report"):
+            msg = await plugin.app.rest.fetch_message(channel = event.interaction.channel_id, message = custom_id[1])
+
+            embed_description = "Reporting a GIF will mark it for review. \nIf the GIF is deemed inappropriate after review, it will be removed.\nIf you're sure you'd like to report this GIF, select the reason below."
+            embed = hikari.Embed(color = hikari.Color(0xc38ed5), title = "Report a GIF",description = embed_description).set_thumbnail(msg.embeds[0].image).set_footer("Warning: Abusing the 'Report' feature will result in a blacklist. Also, I will be very sad. :(")
+            select_menu = plugin.app.rest.build_action_row().add_select_menu(f"report_reason|{msg.embeds[0].image}")\
+                .add_option("GIF is NSFW", "NSFW").set_emoji(hikari.Emoji.parse("🔞")).set_description("The GIF is overly sexual or inappropriate.").add_to_menu()\
+                .add_option("GIF is in the wrong category", "Wrong_Category").set_emoji(hikari.Emoji.parse("❌")).set_description("The GIF is not of the correct action.").add_to_menu()\
+                .add_option("GIF is not loading", "Broken").set_emoji(hikari.Emoji.parse("🛠️")).set_description("The GIF is not loading properly.").add_to_menu()\
+                .add_to_container()
+            await event.interaction.create_initial_response(response_type = 4, content = "Are you sure you want to report this GIF?", flags = hikari.MessageFlag.EPHEMERAL, component = select_menu, embed = embed)
+            await respond_to_interaction()
+        
+         elif(custom_id[0] == "report_reason"):
+            f = open('report_log.txt', 'a')
+            new_line = str(datetime.datetime.now())[:-7] + '|' + str(event.interaction.user.id) + '|' + event.interaction.values[0] + '|' + custom_id[1] + '\n'
+            f.write(new_line)
+            f.close()
+            await event.interaction.create_initial_response(response_type = 4, content = "Your response has been recorded and will be reviewed. Thank you for your input.", flags = hikari.MessageFlag.EPHEMERAL)
+
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to bonk!', type = hikari.User)

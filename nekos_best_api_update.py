@@ -1,6 +1,7 @@
 import requests
 import datetime
 
+# run this file to update gif files from nekos_best_api
 author_id = 173555466176036864
 
 action_files = {
