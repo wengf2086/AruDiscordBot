@@ -4,6 +4,7 @@ import lightbulb
 import re
 import random
 import datetime
+import os.path
 import requests
 from bs4 import BeautifulSoup
 
@@ -68,28 +69,49 @@ def extract_gif_link_from_url(url):
     
     return -1 
 
-# Command that allows the user to add a gif to a certain action
+# Command that allows the user to add a gif/gifs to a certain action
 @plugin.command
-@lightbulb.option('gif_link', 'GIF link to be added', type = str)
+@lightbulb.option('gif_link', 'link(s) of GIF(s) to be added. Add a space between each link!', type = str)
 @lightbulb.option('action', 'action to add the GIF to', type = str)
 @lightbulb.command('addaction', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def add_action(ctx):
-    revised_gif_link = ctx.options.gif_link
-    if not ctx.options.gif_link.endswith(".gif"):
-        revised_gif_link = extract_gif_link_from_url(ctx.options.gif_link)
-    
-    if revised_gif_link == -1:
-        await ctx.respond("Error: Invalid GIF link. Please try again.", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
-        return
-    
     user_id = ctx.author
     file_name = action_files.get(ctx.options.action)
     f = open(file_name, 'a')
-    new_line = str(datetime.datetime.now())[:-7] + '|' + str(ctx.author.id) + '|' + revised_gif_link + '\n'
-    f.write(new_line)
+
+    gif_links = ctx.options.gif_link.split()
+    broken_gif_links = []
+    for link in gif_links:
+        revised_gif_link = link
+        print(revised_gif_link)
+        if not revised_gif_link.endswith(".gif"): # if url does not end with ".gif", extract gif link from URL
+            revised_gif_link = extract_gif_link_from_url(revised_gif_link)
+        
+        if revised_gif_link == -1: # if gif link is broken
+            broken_gif_links.append(revised_gif_link)
+        
+        else:
+            new_line = str(datetime.datetime.now())[:-7] + '|' + str(ctx.author.id) + '|' + revised_gif_link + '\n'
+            f.write(new_line)
     f.close()
-    await ctx.respond("GIF successfully added. Thank you for your contribution! ❤️", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+
+    broken_gif_links_string = ""
+    for link in broken_gif_links:
+        broken_gif_links_string += f"{link}\n"
+
+    if len(gif_links) == 1:
+        if len(broken_gif_links) > 0:
+            await ctx.respond("Error: GIF URL invalid. Please try another URL.", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+        else:
+            await ctx.respond("GIF successfully added. Thank you for your contribution! ❤️", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    elif len(gif_links) > 1:
+        if len(broken_gif_links) == len(gif_links):
+            await ctx.respond("Error: No GIFs added. Please make sure your URLs are valid.", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+        elif len(broken_gif_links) > 0:
+            await ctx.respond("Error: Only some of the GIFs were added. The following provided URLs could not be added: {broken_gif_links_string}", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+        else:
+            await ctx.respond("GIFs successfully added. Thank you for your contribution! ❤️", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
 
 @plugin.command 
 @lightbulb.command('action', 'Specify another user to interact with them with these commands!')
@@ -98,121 +120,120 @@ async def social_action(ctx):
     pass
 
 # Method called by all action commands
-async def perform_action(ctx, action_name, action_string):
-    random_gif = random.choice(list(open(action_files.get(action_name)))).split("|")
+async def perform_action(ctx, action_name, action_string, response_text):
+    gif_file = action_files.get(action_name)
+    custom_gif_count = num_lines = sum(1 for line in open(gif_file))
+    
+
+
+    #gif file does not exist. Send error message and return
+    if not os.path.exists(gif_file):
+        await ctx.respond(f"Error: No GIFs available for this action! Add your own using the `/addaction` command! :3c", flags = hikari.MessageFlag.EPHEMERAL)
+        return
+
+    random_gif = random.choice(list(open(gif_file))).split("|")
     gif_author = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = int(random_gif[1]))
     actor_member = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = ctx.author)
     recipient_member = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = ctx.options.user)
     
     embed = hikari.Embed(color = hikari.Color(0xc38ed5))
     embed.set_image(random_gif[2])
-    embed.set_footer(f'This GIF was added by {gif_author.mention} at {random_gif[0]}. If this GIF inappropriate? If so, report it with the <> reaction.')
 
-    await plugin.app.rest.create_message(channel = ctx.get_channel(), content = f"{recipient_member.mention}{action_string}{actor_member.mention}!" , embed = embed)  
+    msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = f"{recipient_member.mention}{action_string}{actor_member.mention}!" , embed = embed)
+
+    # Report function
+    await ctx.respond(f"{response_text} This GIF was added by {gif_author.mention} at `{random_gif[0]}`. If this gif is inappropriate, offensive, or broken, report it by adding the :warning: reaction.", flags = hikari.MessageFlag.EPHEMERAL)
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to bonk!', type = hikari.User)
 @lightbulb.command('bonk', 'Bonk another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_bonk(ctx):
-    await perform_action(ctx, "bonk", ", you have been bonked by ")
-    await ctx.respond("BONK!", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "bonk", ", you have been bonked by ", "BONK!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to blush at!', type = hikari.User)
 @lightbulb.command('blush', 'Blush at another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_blush(ctx):
-    await perform_action(ctx, "blush", "... \"You're making me blush!\" - ")
-    await ctx.respond("uwu..", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "blush", "... \"You're making me blush!\" - ", "uwu..")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to cuddle!', type = hikari.User)
 @lightbulb.command('cuddle', 'Cuddle another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_cuddle(ctx):
-    await perform_action(ctx, "cuddle", ", you have been cuddled by ")
-    await ctx.respond("Cuddley wuddley uwu..", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "cuddle", ", you have been cuddled by ", "uwu cuddley wuddley...")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to high five!', type = hikari.User)
 @lightbulb.command('highfive', 'High five another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_highfive(ctx):
-    await perform_action(ctx, "highfive", ", you have been high fived by ")
-    await ctx.respond("✋", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "highfive", ", you have been high fived by ",  "✋")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to hold hands with!', type = hikari.User)
 @lightbulb.command('holdhands', 'Hold hands with another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_holdhands(ctx):
-    await perform_action(ctx, "holdhands", " is holding hands with ")
-    await ctx.respond("How lewd..", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "holdhands", " is holding hands with ", "H-how lewd..!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to hug!', type = hikari.User)
 @lightbulb.command('hug', 'Hug another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_hug(ctx):
-    await perform_action(ctx, "hug", ", you have been hugged by ")
-    await ctx.respond("Aww!", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "hug", ", you have been hugged by ", "Aww!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to kiss!', type = hikari.User)
 @lightbulb.command('kiss', 'Kiss another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_kiss(ctx):
-    await perform_action(ctx, "kiss", ", you have been kissed by ")
-    await ctx.respond("How lewd..", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "kiss", ", you have been kissed by ", "H-how lewd..!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to nom!', type = hikari.User)
 @lightbulb.command('nom', 'Nom another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_nom(ctx):
-    await perform_action(ctx, "nom", ", you have been nommed by ")
-    await ctx.respond("Yummy!", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "nom", ", you have been nommed by ", "Yummy!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to nuzzle!', type = hikari.User)
 @lightbulb.command('nuzzle', 'Nuzzle another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_nuzzle(ctx):
-    await perform_action(ctx, "nuzzle", ", you have been nuzzled by ")
-    await ctx.respond(":3c", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "nuzzle", ", you have been nuzzled by ", "uwu..")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to pat!', type = hikari.User)
 @lightbulb.command('pat', 'Pat another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_pat(ctx):
-    await perform_action(ctx, "pat", ", you have been patted by ")
-    await ctx.respond("It'll be okay..", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "pat", ", you have been patted by ", "It'll be okay!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to poke!', type = hikari.User)
 @lightbulb.command('poke', 'Poke another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_poke(ctx):
-    await perform_action(ctx, "poke", ", you have been poked by ")
-    await ctx.respond("Boop!", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "poke", ", you have been poked by ", "Boop!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to slap!', type = hikari.User)
 @lightbulb.command('slap', 'Slap another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_slap(ctx):
-    await perform_action(ctx, "slap", ", you have been slapped by ")
-    await ctx.respond("Ouch!", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "slap", ", you have been slapped by ", "Ouch!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to stare at!', type = hikari.User)
 @lightbulb.command('stare', 'Stare at another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_stare(ctx):
-    await perform_action(ctx, "stare", ", you are being stared at by ")
-    await ctx.respond("👀", flags = hikari.MessageFlag.EPHEMERAL, delete_after = 1)
+    await perform_action(ctx, "stare", ", you are being stared at by ", "👀")
 
 
 
