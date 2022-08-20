@@ -11,10 +11,12 @@ flavorTextChannel = 1009180448003465316
 # When a message is sent in a guild, print the content associated with it (in the console).
 @plugin.listener(hikari.GuildMessageCreateEvent) # Declarator for our function
 async def print_message(event):
-    if event.content == "ily aru":
+    if str(event.content).lower() == "ily aru":
         await plugin.app.rest.create_message(channel = event.channel_id, content = "ily2 :3c")
-    
-    print(event.content)
+    elif str(event.content).lower() == "poyo":
+        await plugin.app.rest.create_message(channel = event.channel_id, content = "Poyo poyo!", attachment = 'https://i.ytimg.com/vi/EsMS1ziIpxU/maxresdefault.jpg')
+
+    print(str(event.author) + " in #" + str(event.get_channel()) + ": " + event.content) # Log messages
 
 # When the bot is started
 @plugin.listener(hikari.StartedEvent)
