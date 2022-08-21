@@ -106,14 +106,14 @@ async def add_action(ctx):
         if len(broken_gif_links) > 0:
             await ctx.respond("Error: GIF URL invalid. Please try another URL.", flags = hikari.MessageFlag.EPHEMERAL)
         else:
-            await ctx.respond("GIF successfully added. Thank you for your contribution! ❤️", flags = hikari.MessageFlag.EPHEMERAL)
+            await ctx.respond("GIF successfully added. Thank you for your contribution! ❤️")
     elif len(gif_links) > 1:
         if len(broken_gif_links) == len(gif_links):
             await ctx.respond("Error: No GIFs added. Please make sure your URLs are valid.", flags = hikari.MessageFlag.EPHEMERAL)
         elif len(broken_gif_links) > 0:
             await ctx.respond("Error: Only some of the GIFs were added. The following provided URLs could not be added: {broken_gif_links_string}", flags = hikari.MessageFlag.EPHEMERAL)
         else:
-            await ctx.respond("GIFs successfully added. Thank you for your contribution! ❤️", flags = hikari.MessageFlag.EPHEMERAL)
+            await ctx.respond("GIFs successfully added. Thank you so much for your contribution! ❤️❤️")
 
 @plugin.command 
 @lightbulb.command('action', 'Specify another user to interact with them with these commands!')
@@ -137,11 +137,11 @@ async def perform_action(ctx, action_name, action_string, response_text):
     
     embed = hikari.Embed(color = hikari.Color(0xc38ed5)).set_image(random_gif[2])
 
-    msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = f"{recipient_member.mention}{action_string}{actor_member.mention}!" , embed = embed)
+    msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = f"{recipient_member.mention}{action_string}{actor_member.mention}!" , embed = embed, user_mentions=True)
 
     # Report function
     button = plugin.app.rest.build_action_row().add_button(2, f"report|{msg.id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
-    await ctx.respond(f"{response_text} This GIF was added by {gif_author.mention} at `{random_gif[0]}`.", flags = hikari.MessageFlag.EPHEMERAL, component = button)
+    await ctx.respond(f"{response_text} This GIF was added by {gif_author.mention} at `{random_gif[0]}`.", component = button, flags = hikari.MessageFlag.EPHEMERAL)
     await respond_to_interaction()
 
 async def respond_to_interaction():
@@ -264,8 +264,6 @@ async def action_slap(ctx):
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_stare(ctx):
     await perform_action(ctx, "stare", ", you are being stared at by ", "👀")
-
-
 
 def load(bot):
     bot.add_plugin(plugin)
