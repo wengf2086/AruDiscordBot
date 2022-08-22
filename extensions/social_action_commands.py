@@ -11,37 +11,7 @@ from bs4 import BeautifulSoup
 
 plugin = lightbulb.Plugin('social_action_commands')
 
-
-
-kirby_react_preset = "<a:kirbeats:1009554827098988574> <a:kirbeatsfast:1009554827992383528> <a:kirbydance:1009554839602204712> <a:kirbydance2:1009554838692044900> <a:kirbyfortnitedance:1009554841963606146> <a:kirbyhi:1009554846967414874> <a:kirbybye:1009554837064650923> <a:kirbyyay:1009554865145528501> <a:kirbyok:1009554850914242754><a:kirbylink:1009554849131675808> <a:kirbyroll:1009554852046700644> <a:kirbyrun:1009554853091082240> <a:kirbyshock:1009554854215168050> <a:kirbyspin:1009554856194867205> <a:kirbyswim:1009554860489842750> <a:kirbyuwu:1009554861739749478> <a:kirbywave:1009554864285683824> <:kirbo:1009554829141606490> <:kirby:1009554833478537377> <:kirbybuffed:1009554836255166474>"
-
-@plugin.command
-@lightbulb.option('emojis', 'emojis / preset to be used as reactions. Only default emojis and emojis from this server allowed.', type = str, required = True)
-@lightbulb.option('message_id', 'ID of the message to be bombed. Will bomb most recent message if not specified.', required = False)
-@lightbulb.command('reactbomb', '\'Bombs\' a message with a bunch of (MAX: 20) reactions! emoji presets: \'kirby\'')
-@lightbulb.implements(lightbulb.SlashCommand)
-async def reactbomb(ctx):
-    message = ""
-    if ctx.options.message_id:
-        message = ctx.options.message_id
-    else:
-        channel = await plugin.app.rest.fetch_channel(channel = ctx.channel_id)
-        message = channel.last_message_id
-
-    emojis = ""
-    if ctx.options.emojis == "kirby":
-        emojis = kirby_react_preset
-
-    elif ctx.options.emojis:
-        emojis = ctx.options.emojis
-
-    print(emojis.split(" "))
-    for emoji_str in emojis.split(" "):
-        emoji = hikari.Emoji.parse(emoji_str)
-        await plugin.app.rest.add_reaction(channel = ctx.channel_id, message = message, emoji = emoji)
-
-
-
+log_file_name = "log.txt"
 # Social Actions
 action_files = {
         'bonk':'action_bonk_gifs.txt',
@@ -71,17 +41,22 @@ def extract_gif_link_from_url(url):
     
     return -1 
 
+@plugin.command 
+@lightbulb.command('action', 'Specify another user to interact with them with these commands!')
+@lightbulb.implements(lightbulb.SlashCommandGroup)
+async def social_action(ctx):
+    pass
+
 # Command that allows the user to add a gif/gifs to a certain action
-@plugin.command
+@social_action.child
 @lightbulb.option('gif_link', 'link(s) of GIF(s) to be added. Add a space between each link!', type = str)
 @lightbulb.option('action', 'action to add the GIF to', type = str)
-@lightbulb.command('addaction', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.')
-@lightbulb.implements(lightbulb.SlashCommand)
-async def add_action(ctx):
+@lightbulb.command('addgif', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def add_gif(ctx):
     user_id = ctx.author
-    file_name = action_files.get(ctx.options.action)
-    f = open(file_name, 'a')
-
+    action_file_name = action_files.get(ctx.options.action)
+    action_file = open(action_file_name, 'a')
     gif_links = ctx.options.gif_link.split()
     broken_gif_links = []
     for link in gif_links:
@@ -94,9 +69,9 @@ async def add_action(ctx):
         
         else:
             new_line = str(datetime.datetime.now())[:-7] + '|' + str(ctx.author.id) + '|' + revised_gif_link
-            f.write(new_line)
-            f.write('\n')
-    f.close()
+            action_file.write(new_line)
+            action_file.write('\n')
+    action_file.close()
 
     broken_gif_links_string = ""
     for link in broken_gif_links:
@@ -115,15 +90,9 @@ async def add_action(ctx):
         else:
             await ctx.respond("GIFs successfully added. Thank you so much for your contribution! ❤️❤️")
 
-@plugin.command 
-@lightbulb.command('action', 'Specify another user to interact with them with these commands!')
-@lightbulb.implements(lightbulb.SlashCommandGroup)
-async def social_action(ctx):
-    pass
-
 # Method called by all action commands
 async def perform_action(ctx, action_name, action_string, response_text):
-    gif_file = action_files.get(action_name)
+    gif_file = "C:/Users/Cookie/Documents/GitHub/AruDiscordBot/action_gifs/" + action_files.get(action_name)
 
     #gif file does not exist. Send error message and return
     if not os.path.exists(gif_file):
@@ -167,12 +136,11 @@ async def respond_to_interaction():
             await respond_to_interaction()
         
          elif(custom_id[0] == "report_reason"):
-            f = open('report_log.txt', 'a')
+            f = open(log_file_name, 'a')
             new_line = str(datetime.datetime.now())[:-7] + '|' + str(event.interaction.user.id) + '|' + event.interaction.values[0] + '|' + custom_id[1] + '\n'
             f.write(new_line)
             f.close()
             await event.interaction.create_initial_response(response_type = 4, content = "Your response has been recorded and will be reviewed. Thank you for your input.", flags = hikari.MessageFlag.EPHEMERAL)
-
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to bonk!', type = hikari.User)
