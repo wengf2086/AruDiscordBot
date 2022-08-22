@@ -30,9 +30,9 @@ async def start_bot(event):
     elif int(currTime[0:2]) == 12:
         addText = " Oh, it's noon!"
     elif int(currTime[0:2]) < 6:
-        addText = " It's late... Should you be up? I hope you can get some sleep soon."
+        addText = "It's late... Should you be up? I hope you can get some sleep soon."
 
-    await plugin.app.rest.create_message(channel = flavorTextChannel, content = f"Good Morning! It is now {currTime}!{addText}")
+    await plugin.app.rest.create_message(channel = flavorTextChannel, content = f"Good Morning! It is now {currTime}! {addText}", user_mentions = True)
 
 # When the bot is stopped
 @plugin.listener(hikari.StoppingEvent)

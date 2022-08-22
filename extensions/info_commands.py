@@ -3,6 +3,7 @@ import lightbulb
 import datetime
 
 plugin = lightbulb.Plugin('info_commands')
+start_time = None
 
 @plugin.command 
 @lightbulb.app_command_permissions(dm_enabled=True)
@@ -123,13 +124,24 @@ async def aru_info(ctx):
         pretext += "Wait, did someone change my name...? Anyways, my _real_ name is Aru. "
     pretext += "Nice to meet you! :3c"
     description = pretext + ""
+    uptime = (datetime.datetime.now() - start_time).total_seconds()
+    uptime_days = int(uptime // 86400)
+    uptime -= uptime_days * 86400
+    uptime_hours = int(uptime // 3600)
+    uptime -= uptime_hours * 3600
+    uptime_minutes = int(uptime // 60)
+    uptime -= uptime_hours * 60
+    uptime_seconds = int(uptime)
+
     # create embed to display information
     await ctx.respond(hikari.Embed(title = f"About Me", description = description, color = hikari.Color(0xc38ed5))\
         .set_thumbnail(member.avatar_url)\
         .add_field(name = "My User ID", value = member.id, inline = True)\
-        .add_field(name = "My Birthday", value = str(member.created_at)[:19], inline = True)\
+        .add_field(name = "My Birthday 🍰", value = str(member.created_at)[:19], inline = True)\
         .add_field(name = f"Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
-        .add_field(name = "Current Uptime", value = "None"))
+        .add_field(name = "Current Uptime", value = f"{uptime_days} days, {uptime_hours} hours, {uptime_minutes} minutes, {uptime_seconds} seconds"))
 
 def load(bot):
     bot.add_plugin(plugin)
+    global start_time
+    start_time = datetime.datetime.now()

@@ -13,21 +13,6 @@ plugin = lightbulb.Plugin('social_action_commands')
 
 log_file_name = "log.txt"
 # Social Actions
-action_files = {
-        'bonk':'action_bonk_gifs.txt',
-        'blush': 'action_blush_gifs.txt',
-        'cuddle': 'action_cuddle_gifs.txt',
-        'highfive': 'action_highfive_gifs.txt',
-        'holdhands': 'action_holdhands_gifs.txt',
-        'hug': 'action_hug_gifs.txt',
-        'kiss': 'action_kiss_gifs.txt',
-        'nom': 'action_nom_gifs.txt',
-        'nuzzle': 'action_nuzzle_gifs.txt',
-        'pat': 'action_pat_gifs.txt',
-        'poke': 'action_poke_gifs.txt',
-        'slap': 'action_slap_gifs.txt',
-        'stare': 'action_stare_gifs.txt', 
-    }
 
 # Method that extracts a gif from a URL
 def extract_gif_link_from_url(url):
@@ -55,7 +40,7 @@ async def social_action(ctx):
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def add_gif(ctx):
     user_id = ctx.author
-    action_file_name = action_files.get(ctx.options.action)
+    action_file_name = "C:/Users/Cookie/Documents/GitHub/AruDiscordBot/action_gifs/" + f"action_{ctx.options.action}_gifs.txt"
     action_file = open(action_file_name, 'a')
     gif_links = ctx.options.gif_link.split()
     broken_gif_links = []
@@ -92,7 +77,7 @@ async def add_gif(ctx):
 
 # Method called by all action commands
 async def perform_action(ctx, action_name, action_string, response_text):
-    gif_file = "C:/Users/Cookie/Documents/GitHub/AruDiscordBot/action_gifs/" + action_files.get(action_name)
+    gif_file = "C:/Users/Cookie/Documents/GitHub/AruDiscordBot/action_gifs/" + f"action_{action_name}_gifs.txt"
 
     #gif file does not exist. Send error message and return
     if not os.path.exists(gif_file):
@@ -185,11 +170,25 @@ async def action_hug(ctx):
     await perform_action(ctx, "hug", ", you have been hugged by ", "Aww!")
 
 @social_action.child
+@lightbulb.option('user', 'Mention the user you want to kick!', type = hikari.User)
+@lightbulb.command('kick', 'Kick another user!')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def action_kick(ctx):
+    await perform_action(ctx, "kick", ", you have been kicked by ", "Ouch!")
+
+@social_action.child
 @lightbulb.option('user', 'Mention the user you want to kiss!', type = hikari.User)
 @lightbulb.command('kiss', 'Kiss another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_kiss(ctx):
     await perform_action(ctx, "kiss", ", you have been kissed by ", "H-how lewd..!")
+
+@social_action.child
+@lightbulb.option('user', 'Mention the user you want to laugh at!', type = hikari.User)
+@lightbulb.command('laugh', 'Laugh at another user!')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def action_laugh(ctx):
+    await perform_action(ctx, "laugh", ", you are being laughed at by ", "Ouch!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to nom!', type = hikari.User)
@@ -213,6 +212,13 @@ async def action_pat(ctx):
     await perform_action(ctx, "pat", ", you have been patted by ", "It'll be okay!")
 
 @social_action.child
+@lightbulb.option('user', 'Mention the user you want to punch!', type = hikari.User)
+@lightbulb.command('punch', 'Punch at another user!')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def action_kick(ctx):
+    await perform_action(ctx, "punch", ", you are being laughed at by ", "Ouch!")
+
+@social_action.child
 @lightbulb.option('user', 'Mention the user you want to poke!', type = hikari.User)
 @lightbulb.command('poke', 'Poke another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
@@ -220,11 +226,18 @@ async def action_poke(ctx):
     await perform_action(ctx, "poke", ", you have been poked by ", "Boop!")
 
 @social_action.child
+@lightbulb.option('user', 'Mention the user you want to shoot!', type = hikari.User)
+@lightbulb.command('shoot', 'Shoot another user!')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def action_shoot(ctx):
+    await perform_action(ctx, "shoot", ", you have been shot by ", "Bang!")
+
+@social_action.child
 @lightbulb.option('user', 'Mention the user you want to slap!', type = hikari.User)
 @lightbulb.command('slap', 'Slap another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_slap(ctx):
-    await perform_action(ctx, "slap", ", you have been slapped by ", "Ouch!")
+    await perform_action(ctx, "slap", ", you have been slapped by ", "That's gonna sting..!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to stare at!', type = hikari.User)
@@ -233,5 +246,32 @@ async def action_slap(ctx):
 async def action_stare(ctx):
     await perform_action(ctx, "stare", ", you are being stared at by ", "👀")
 
+@social_action.child
+@lightbulb.option('user', 'Mention the user you want to tickled', type = hikari.User)
+@lightbulb.command('tickle', 'Tickle another user!')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def action_tickle(ctx):
+    await perform_action(ctx, "tickle", ", you are being tickled by ", "👐")
+
+@social_action.child
+@lightbulb.option('user', 'Mention the user you want to tuck in!', type = hikari.User)
+@lightbulb.command('tuckin', 'Tuck in another user!')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def action_tuckin(ctx):
+    await perform_action(ctx, "tuckin", ", you are being tucked in by ", "Sweet dreams... ")
+
+@social_action.child
+@lightbulb.option('user', 'Mention the user you want to wink at!', type = hikari.User)
+@lightbulb.command('wink', 'Wink at another user!')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def action_wink(ctx):
+    await perform_action(ctx, "wink", ", you are being winked at by ", "😉")
+
+@social_action.child
+@lightbulb.option('user', 'Mention the user you want to yeet!', type = hikari.User)
+@lightbulb.command('yeet', 'Yeet another user!')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def action_yeet(ctx):
+    await perform_action(ctx, "yeet", ", you have been yeeted by ", "YEET!")
 def load(bot):
     bot.add_plugin(plugin)
