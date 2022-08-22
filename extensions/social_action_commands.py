@@ -68,7 +68,7 @@ async def add_gif(ctx):
             broken_gif_links.append(revised_gif_link)
         
         else:
-            new_line = str(datetime.datetime.now())[:-7] + '|' + str(ctx.author.id) + '|' + revised_gif_link
+            new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(ctx.author.id) + '|' + revised_gif_link
             action_file.write(new_line)
             action_file.write('\n')
     action_file.close()
@@ -137,7 +137,7 @@ async def respond_to_interaction():
         
          elif(custom_id[0] == "report_reason"):
             f = open(log_file_name, 'a')
-            new_line = str(datetime.datetime.now())[:-7] + '|' + str(event.interaction.user.id) + '|' + event.interaction.values[0] + '|' + custom_id[1] + '\n'
+            new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(event.interaction.user.id) + '|' + event.interaction.values[0] + '|' + custom_id[1] + '\n'
             f.write(new_line)
             f.close()
             await event.interaction.create_initial_response(response_type = 4, content = "Your response has been recorded and will be reviewed. Thank you for your input.", flags = hikari.MessageFlag.EPHEMERAL)
