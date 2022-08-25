@@ -1,6 +1,8 @@
 import hikari
 import lightbulb
 import datetime
+from bot import servers
+from helper_functions import get_all_action_names
 
 plugin = lightbulb.Plugin('info_commands')
 start_time = None
@@ -24,19 +26,28 @@ async def get_info_on_user(ctx):
         # get member's visible status
         if member.get_presence() == None:
             visible_status_string = "Offline"
+            visible_status_emoji = "<:status_offline:1011173790354505798>"
         elif member.get_presence().visible_status == "dnd":
             visible_status_string = "Do Not Disturb"
+            visible_status_emoji = "<:status_dnd:1011173792187416626>"
         else:
             visible_status_string = member.get_presence().visible_status.capitalize()
-    
+            if member.get_presence().visible_status == "online":
+                visible_status_emoji = "<:status_online:1011173788311883796>"
+            elif member.get_presence().visible_status == "idle":
+                visible_status_emoji = "<:status_idle:1011175514251206656>"
+
         # get member's client status
         client_status_string = ""
         if member.get_presence() and member.get_presence().client_status.desktop == "offline": # if the user is online but not on Desktop
             if member.get_presence().client_status.mobile != "offline":
                 client_status_string = "(Mobile)"
+                if member.get_presence().visible_status == "online":
+                    visible_status_emoji = "<:status_mobile:1011173789456936980>"
+
             elif member.get_presence().client_status.web != "offline":
                 client_status_string = "(Web)"
-
+                
         # get member's roles and create string of role mentions
         member_roles = await member.fetch_roles()
         # roles_mentions = f"{' '.join([role.mention if role.name is not "@everyone" for role in member_roles])}"
@@ -49,7 +60,7 @@ async def get_info_on_user(ctx):
             .add_field(name = "User", value = f"{member.mention}", inline = True)\
             .add_field(name = "User ID", value = member.id, inline = True)\
             .add_field(name = "Account Created On", value = member.created_at.strftime("%m/%d/%Y, %H:%M:%S"), inline = True)\
-            .add_field(name = "Status", value = f"{visible_status_string} {client_status_string}", inline = True)\
+            .add_field(name = f"Status {visible_status_emoji}", value = f"{visible_status_string} {client_status_string}", inline = True)\
             .add_field(name = "Server Boosting Since", value = member.premium_since if member.premium_since else "Not server boosting", inline = True)\
             .add_field(name = f"Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = member.joined_at.strftime("%m/%d/%Y, %H:%M:%S"), inline = True)\
             .add_field(name = f"Roles ({len(member_roles) - 1})", value = roles_mentions, inline = False)) # Does not include @everyone role
@@ -107,8 +118,11 @@ async def get_profile_picture(ctx):
     if ctx.options.user:
         target = ctx.options.user
         title = f"{target.username}'s Profile Picture"
+
+    print(target.id)
+    add_text = "Wait, that's me! Heehee!" if target.id == 1009180210823970956 else '' # If target is Aru lol
     await ctx.respond(hikari.Embed(title = title, url = str(target.display_avatar_url), color = hikari.Color(0xc38ed5)).set_image(target.display_avatar_url)\
-        .set_footer(icon = plugin.app.get_me().avatar_url, text = "What a cutie!"))
+        .set_footer(icon = plugin.app.get_me().avatar_url, text = f"What a cutie! {add_text}"))
 
 @get_info.child
 @lightbulb.app_command_permissions(dm_enabled=True)
@@ -117,12 +131,20 @@ async def get_profile_picture(ctx):
 async def aru_info(ctx):
     member = ctx.get_guild().get_member(plugin.app.get_me().id)
 
+    creator = await plugin.app.rest.fetch_user(173555466176036864)
+    try: # if creator (me) is a member of the guild, mention me
+        creator = await plugin.app.rest.fetch_member(guild = ctx.get_guild(), user = 173555466176036864)
+        display_creator = creator.mention
+    
+    except: # otherwise just print my username
+        display_creator = creator.username + "#" + creator.discriminator
+    
     server_name = f"'{await plugin.app.rest.fetch_guild(member.guild_id)}'"
 
     pretext = f"Hi, I'm {member.mention}. "
     if member.display_name != member.username:
         pretext += "Wait, did someone change my name...? Anyways, my _real_ name is Aru. "
-    pretext += "Nice to meet you! :3c"
+    pretext += "Nice to meet you! <a:kirbywave:1009554864285683824>"
     description = pretext + ""
     uptime = (datetime.datetime.now() - start_time).total_seconds()
     uptime_days = int(uptime // 86400)
@@ -130,16 +152,65 @@ async def aru_info(ctx):
     uptime_hours = int(uptime // 3600)
     uptime -= uptime_hours * 3600
     uptime_minutes = int(uptime // 60)
-    uptime -= uptime_hours * 60
+    uptime -= uptime_minutes * 60
     uptime_seconds = int(uptime)
 
+    # Action Commands Info
+    action_names_string = f"{' '.join(['`' + action_name + '`' for action_name in get_all_action_names()])}"
+    info_action_name = "<:kirbyexclamation:1011482105655595090> /action commands:"
+    info_action_value = f"Get a random anime GIF of a specific action and direct it towards another user!\
+                          \n{action_names_string}\
+                          \n\nDid you know you can add your own GIFs? Find out how:\
+                          \n`/info command addgif`"
+
+    # Channel Management Commands Info
+    info_channel_management_name = "<:kirbyblush:1011481544017318019> /channel commands (Admin Only):"
+    info_channel_management_value = "Manage users in voice channels!\
+                                    \n`WIP!!`"
+
+    # Fun Commands Info
+    info_fun_name = "<:kirbytongue:1011481549637697627> /fun commands:"
+    info_fun_value = "Miscellaneous commands that do random fun things!"
+    info_fun_value += "\n`reactbomb`: Adds multiple (max: 20) emojis to a message."
+    info_fun_value += "\n\n`8ball`: Ask the Magic 8-Ball™ a yes/no question!"
+    
+    # Info Commands... Info
+    info_info_name = "<:kirbyquestion:1011482109229158500> /info commands:"
+    info_info_value = "Get info about a user, this server, me, or a specific command!\
+                       \n`user` `server` `pfp` `help` `commands`"
+
+    # Music Commands Info
+    info_music_name = "<a:kirbeats:1009554827098988574> /music commands:"
+    info_music_value = "Play music!\
+                        \n`Also WIP!!`"
+
+    # Suggestion Info
+    
     # create embed to display information
-    await ctx.respond(hikari.Embed(title = f"About Me", description = description, color = hikari.Color(0xc38ed5))\
+    await ctx.respond(hikari.Embed(title = f"<a:kirbyhi:1009554846967414874> About Me", description = description, color = hikari.Color(0xc38ed5))\
         .set_thumbnail(member.avatar_url)\
-        .add_field(name = "My User ID", value = member.id, inline = True)\
-        .add_field(name = "My Birthday 🍰", value = str(member.created_at)[:19], inline = True)\
-        .add_field(name = f"Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
-        .add_field(name = "Current Uptime", value = f"{uptime_days} days, {uptime_hours} hours, {uptime_minutes} minutes, {uptime_seconds} seconds"))
+        .add_field(name = f"<:kirbyheart:1011481547133702214> Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
+        .add_field(name = "<:kirbyheart:1011481547133702214> Total Server Count", value = f"Currently in {len(servers)} servers", inline = True)\
+        .add_field(name = "<:kirbyheart:1011481547133702214> My Birthday", value = str(member.created_at)[:19], inline = False)\
+        .add_field(name = "<:kirbyheart:1011481547133702214> My Creator", value = f"{display_creator}", inline = True)\
+        .add_field(name = "<:kirbyheart:1011481547133702214> My User ID", value = member.id, inline = True)\
+        .add_field(name = info_action_name, value = info_action_value, inline = False)\
+        .add_field(name = info_channel_management_name, value = info_channel_management_value, inline = False)\
+        .add_field(name = info_fun_name, value = info_fun_value, inline = False)\
+        .add_field(name = info_info_name, value = info_info_value, inline = False)\
+        .add_field(name = info_music_name, value = info_music_value, inline = False)\
+        .add_field(name = "<:kirbylightbulb:1011482108147011593> Got a question, comment, or suggestion?", value = "Let your heart out with the `/feedback` command. I'll listen to whatever you have to say... ", inline = False)\
+        .set_footer(text = f"Current Uptime: {uptime_days} days, {uptime_hours} hours, {uptime_minutes} minutes, {uptime_seconds} seconds. Thanks for having me! ❤️", icon = member.avatar_url)
+        .set_author(name = "So you want to get to know me better, huh?", icon = ctx.get_guild().icon_url)\
+    )
+
+@get_info.child
+@lightbulb.app_command_permissions(dm_enabled=True)
+@lightbulb.option('command_name','Which command would you like to learn more about?')
+@lightbulb.command('command', 'Learn more about a specific command!')
+@lightbulb.implements(lightbulb.SlashSubCommand, lightbulb.PrefixCommand)
+async def aru_info(ctx):
+    await ctx.respond("This command is in the works. Sorry about that!! <:kirbyblush:1011481544017318019>")
 
 def load(bot):
     bot.add_plugin(plugin)

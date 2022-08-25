@@ -17,7 +17,7 @@ async def print_message(event):
         await plugin.app.rest.create_message(channel = event.channel_id, content = "Poyo poyo!", attachment = 'https://i.ytimg.com/vi/EsMS1ziIpxU/maxresdefault.jpg')
 
     if event.content:
-        print(str(event.author) + " in #" + str(event.get_channel()) + ": " + event.content) # Log messages
+        print(str(event.author) + " in #" + str(event.get_channel()) + f"(event.get_guild().name): " + event.content) # Log messages
     
 # When the bot is started
 @plugin.listener(hikari.StartedEvent)
@@ -32,12 +32,12 @@ async def start_bot(event):
     elif int(currTime[0:2]) < 6:
         addText = "It's late... Should you be up? I hope you can get some sleep soon."
 
-    await plugin.app.rest.create_message(channel = flavorTextChannel, content = f"Good Morning! It is now {currTime}! {addText}", user_mentions = True)
+    await plugin.app.rest.create_message(channel = flavorTextChannel, content = f"Good Morning! It is now {currTime}! {addText} <a:kirbywink:1011481550577213450>", user_mentions = True)
 
 # When the bot is stopped
 @plugin.listener(hikari.StoppingEvent)
 async def start_bot(event):
-    await plugin.app.rest.create_message(channel = flavorTextChannel, content = f"_Getting... sleepy..._ (Aru is now offline.)")
+    await plugin.app.rest.create_message(channel = flavorTextChannel, content = f"_Getting... sleepy..._ <:kirbysleeby:1009554855293096048> (Aru is now offline.)")
 
 def load(bot):
     if not silentMode:

@@ -8,26 +8,29 @@ import datetime
 import os.path
 import requests
 from bs4 import BeautifulSoup
+from helper_functions import get_all_action_names
 
 plugin = lightbulb.Plugin('social_action_commands')
-
 log_file_name = "log.txt"
+
 # Social Actions
 
 # Method that extracts a gif from a URL
 def extract_gif_link_from_url(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, features="html.parser")
-    metas = soup.find_all(property='og:url')
+    try:
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, features="html.parser")
+        metas = soup.find_all(property='og:url')
 
-    for meta in metas:
-        if meta.attrs.get("content").endswith(".gif"):
-            return meta.attrs.get("content")
-    
-    return -1 
+        for meta in metas:
+            if meta.attrs.get("content").endswith(".gif"):
+                return meta.attrs.get("content")
+        return -1
+    except:
+        return -1 
 
 @plugin.command 
-@lightbulb.command('action', 'Specify another user to interact with them with these commands!')
+@lightbulb.command('action', 'Get a random anime GIF of an action and direct it to another user!')
 @lightbulb.implements(lightbulb.SlashCommandGroup)
 async def social_action(ctx):
     pass
@@ -39,7 +42,10 @@ async def social_action(ctx):
 @lightbulb.command('addgif', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def add_gif(ctx):
-    user_id = ctx.author
+    if ctx.options.action not in get_all_action_names():
+        await ctx.respond("Sorry, I couldn't find an action with that name. Please try again! <a:kirbydeeono:1011803865164816384>")
+        return
+
     action_file_name = "C:/Users/Cookie/Documents/GitHub/AruDiscordBot/action_gifs/" + f"action_{ctx.options.action}_gifs.txt"
     action_file = open(action_file_name, 'a')
     gif_links = ctx.options.gif_link.split()
@@ -64,16 +70,16 @@ async def add_gif(ctx):
 
     if len(gif_links) == 1:
         if len(broken_gif_links) > 0:
-            await ctx.respond("Error: GIF URL invalid. Please try another URL.", flags = hikari.MessageFlag.EPHEMERAL)
+            await ctx.respond("Sorry, but that GIF link appears to be invalid. Please try again! <a:kirbydeeono:1011803865164816384>", flags = hikari.MessageFlag.EPHEMERAL)
         else:
-            await ctx.respond("GIF successfully added. Thank you for your contribution! ❤️")
+            await ctx.respond("GIF successfully added. Thank you for your contribution! <:kirbyblowkiss:1011481542712897548>")
     elif len(gif_links) > 1:
         if len(broken_gif_links) == len(gif_links):
-            await ctx.respond("Error: No GIFs added. Please make sure your URLs are valid.", flags = hikari.MessageFlag.EPHEMERAL)
+            await ctx.respond("Sorry, but your GIF links are invalid. Please make sure your URLs are correct and try again! <a:kirbydeeono:1011803865164816384>", flags = hikari.MessageFlag.EPHEMERAL)
         elif len(broken_gif_links) > 0:
-            await ctx.respond("Error: Only some of the GIFs were added. The following provided URLs could not be added: {broken_gif_links_string}", flags = hikari.MessageFlag.EPHEMERAL)
+            await ctx.respond("Only some of the GIFs were added. The following provided URL(s) could not be added: {broken_gif_links_string} \nPlease check to make sure the URLs are valid and try again! <a:kirbydeeono:1011803865164816384>", flags = hikari.MessageFlag.EPHEMERAL)
         else:
-            await ctx.respond("GIFs successfully added. Thank you so much for your contribution! ❤️❤️")
+            await ctx.respond("GIFs successfully added. Thank you so much for your contribution! <:kirbyblowkiss:1011481542712897548><:kirbyblowkiss:1011481542712897548><:kirbyblowkiss:1011481542712897548>")
 
 # Method called by all action commands
 async def perform_action(ctx, action_name, action_string, response_text):
@@ -188,7 +194,7 @@ async def action_kiss(ctx):
 @lightbulb.command('laugh', 'Laugh at another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_laugh(ctx):
-    await perform_action(ctx, "laugh", ", you are being laughed at by ", "Ouch!")
+    await perform_action(ctx, "laugh", ", you are being laughed at by ", "Haha!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to nom!', type = hikari.User)
@@ -215,8 +221,8 @@ async def action_pat(ctx):
 @lightbulb.option('user', 'Mention the user you want to punch!', type = hikari.User)
 @lightbulb.command('punch', 'Punch at another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
-async def action_kick(ctx):
-    await perform_action(ctx, "punch", ", you are being laughed at by ", "Ouch!")
+async def action_punch(ctx):
+    await perform_action(ctx, "punch", ", you have been punched by ", "<a:kirbypunch:1011814450757636137>")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to poke!', type = hikari.User)
@@ -230,7 +236,7 @@ async def action_poke(ctx):
 @lightbulb.command('shoot', 'Shoot another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_shoot(ctx):
-    await perform_action(ctx, "shoot", ", you have been shot by ", "Bang!")
+    await perform_action(ctx, "shoot", ", you have been shot by ", "<:kirbygun:1009321446637588480> Bang!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to slap!', type = hikari.User)
@@ -244,7 +250,7 @@ async def action_slap(ctx):
 @lightbulb.command('stare', 'Stare at another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_stare(ctx):
-    await perform_action(ctx, "stare", ", you are being stared at by ", "👀")
+    await perform_action(ctx, "stare", ", you are being stared at by ", "<a:kirbyshock:1009554854215168050>")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to tickled', type = hikari.User)
@@ -258,14 +264,14 @@ async def action_tickle(ctx):
 @lightbulb.command('tuckin', 'Tuck in another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_tuckin(ctx):
-    await perform_action(ctx, "tuckin", ", you are being tucked in by ", "Sweet dreams... ")
+    await perform_action(ctx, "tuckin", ", you are being tucked in by ", "Sweet dreams... <:kirbysleeby:1009554855293096048>")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to wink at!', type = hikari.User)
 @lightbulb.command('wink', 'Wink at another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_wink(ctx):
-    await perform_action(ctx, "wink", ", you are being winked at by ", "😉")
+    await perform_action(ctx, "wink", ", you are being winked at by ", "<a:kirbywink:1011481550577213450>")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to yeet!', type = hikari.User)
