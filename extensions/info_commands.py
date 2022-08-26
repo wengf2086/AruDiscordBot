@@ -2,7 +2,7 @@ import hikari
 import lightbulb
 import datetime
 from bot import servers
-from helper_functions import get_all_action_names
+import helper_functions
 
 plugin = lightbulb.Plugin('info_commands')
 start_time = None
@@ -156,7 +156,7 @@ async def aru_info(ctx):
     uptime_seconds = int(uptime)
 
     # Action Commands Info
-    action_names_string = f"{' '.join(['`' + action_name + '`' for action_name in get_all_action_names()])}"
+    action_names_string = f"{' '.join(['`' + action_name + '`' for action_name in helper_functions.get_all_action_names()])}"
     info_action_name = "<:kirbyexclamation:1011482105655595090> /action commands:"
     info_action_value = f"Get a random anime GIF of a specific action and direct it towards another user!\
                           \n{action_names_string}\
@@ -189,11 +189,11 @@ async def aru_info(ctx):
     # create embed to display information
     await ctx.respond(hikari.Embed(title = f"<a:kirbyhi:1009554846967414874> About Me", description = description, color = hikari.Color(0xc38ed5))\
         .set_thumbnail(member.avatar_url)\
-        .add_field(name = f"<:kirbyheart:1011481547133702214> Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
-        .add_field(name = "<:kirbyheart:1011481547133702214> Total Server Count", value = f"Currently in {len(servers)} servers", inline = True)\
-        .add_field(name = "<:kirbyheart:1011481547133702214> My Birthday", value = str(member.created_at)[:19], inline = False)\
-        .add_field(name = "<:kirbyheart:1011481547133702214> My Creator", value = f"{display_creator}", inline = True)\
-        .add_field(name = "<:kirbyheart:1011481547133702214> My User ID", value = member.id, inline = True)\
+        .add_field(name = f"<a:pinkheart:1012788247556018319> Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
+        .add_field(name = "<a:pinkheart:1012788247556018319> Total Server Count", value = f"Currently in {len(servers)} servers", inline = True)\
+        .add_field(name = "<a:pinkheart:1012788247556018319> My Birthday", value = str(member.created_at)[:19], inline = False)\
+        .add_field(name = "<a:pinkheart:1012788247556018319> My Creator", value = f"{display_creator}", inline = True)\
+        .add_field(name = "<a:pinkheart:1012788247556018319> My User ID", value = member.id, inline = True)\
         .add_field(name = info_action_name, value = info_action_value, inline = False)\
         .add_field(name = info_channel_management_name, value = info_channel_management_value, inline = False)\
         .add_field(name = info_fun_name, value = info_fun_value, inline = False)\
@@ -207,11 +207,36 @@ async def aru_info(ctx):
 @get_info.child
 @lightbulb.app_command_permissions(dm_enabled=True)
 @lightbulb.option('command_name','Which command would you like to learn more about?')
-@lightbulb.command('command', 'Learn more about a specific command!')
+@lightbulb.command('command', 'Learn more about a specific command! (Supported commands: \'addgif\', \'reactbomb\')')
 @lightbulb.implements(lightbulb.SlashSubCommand, lightbulb.PrefixCommand)
 async def aru_info(ctx):
-    await ctx.respond("This command is in the works. Sorry about that!! <:kirbyblush:1011481544017318019>")
+    # await ctx.respond("This command is in the works. Sorry about that!! <:kirbyblush:1011481544017318019>")
+    if ctx.options.command_name == "addgif":
+        await ctx.respond("<a:rightarrow:1012784974899990571> Usage: `/action addgif [action name] [gif_link_1, gif_link_2, ..., gif_link_10]`\
+                           \n<a:purpleheart:1012784670687100999> This command allows you to add your own GIF link(s) for a specific `/action` command.\
+                           \n<a:purpleheart:1012784670687100999> If a GIF is successfully added, it has a chance to show up when a user calls the respective action command.\
+                           \n<a:purpleheart:1012784670687100999> Sample Usage: `/action addgif bonk https://tenor.com/view/bonk-gif-21852548 https://c.tenor.com/9Q95PaJTxSYAAAAd/ina-bonk.gif`", flags = hikari.MessageFlag.EPHEMERAL)
 
+    elif ctx.options.command_name == "reactbomb":
+        await ctx.respond("<a:rightarrow:1012784974899990571> Usage: `/fun reactbomb [emojis or preset name] [message_id (optional)]`\
+                           \n<a:purpleheart:1012784670687100999> This command reacts with the specified emojis to a specific message, or the most recent message if no message is specified.\
+                           \n<a:purpleheart:1012784670687100999> You can specify up to 20 emojis in the [emojis or preset name] parameter. These emojis must be available in the server you are calling the command in.\
+                           \n<a:purpleheart:1012784670687100999> You can also specify a preset name instead of emojis. This will react with 20 random custom emojis from the preset.\
+                           \n<a:purpleheart:1012784670687100999> Currently available presets: \"kirby\", \"sparkles\". To be added: \"jam\", \"pog\". Suggest your own preset with `/feedback`!\
+                           \n<a:purpleheart:1012784670687100999> Sample Usage: `/fun reactbomb :kirbyhappy: :kirbysit:`", flags = hikari.MessageFlag.EPHEMERAL)
+
+@plugin.command
+@lightbulb.app_command_permissions(dm_enabled=True)
+@lightbulb.option('feedback',"Your feedback here!")
+@lightbulb.command('feedback', 'Got a question, comment, or suggestion? Share it with this command!')
+@lightbulb.implements(lightbulb.SlashCommand, lightbulb.PrefixCommand)
+async def feedback(ctx):
+    f = open(helper_functions.log_file_name, 'a')
+    new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(ctx.author.id) + '|' + "FEEDBACK" + '|' + ctx.options.feedback + '\n'
+    f.write(new_line)
+    f.close()
+    await ctx.respond(response_type = 4, content = f"Your comment: `{ctx.options.feedback}`\
+                                                     \nThank you for helping Aru become a better bot! Your feedback is much appreciated and will be taken into consideration. <:kirbyheart:1011481547133702214>", flags = hikari.MessageFlag.EPHEMERAL)
 def load(bot):
     bot.add_plugin(plugin)
     global start_time

@@ -16,8 +16,14 @@ async def print_message(event):
     elif str(event.content).lower() == "poyo":
         await plugin.app.rest.create_message(channel = event.channel_id, content = "Poyo poyo!", attachment = 'https://i.ytimg.com/vi/EsMS1ziIpxU/maxresdefault.jpg')
 
+    print(str(event.message.created_at.strftime("%m/%d/%y, %H:%M:%S")) + f" [{event.get_guild().name}, #{str(event.get_channel())}] " + str(event.author) + ": ", end ="")
     if event.content:
-        print(str(event.author) + " in #" + str(event.get_channel()) + f"(event.get_guild().name): " + event.content) # Log messages
+        print(event.content)
+    
+    if len(event.message.attachments) != 0:
+        print("attachment(s): ", end = "")
+        for attachment in event.message.attachments:
+            print(attachment.url + ", ")
     
 # When the bot is started
 @plugin.listener(hikari.StartedEvent)
