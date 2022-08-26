@@ -39,7 +39,7 @@ async def social_action(ctx):
 @social_action.child
 @lightbulb.option('gif_link', 'link(s) of GIF(s) to be added. Add a space between each link!', type = str)
 @lightbulb.option('action', 'action to add the GIF to', type = str)
-@lightbulb.command('addgif', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.')
+@lightbulb.command('addgif', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.', auto_defer = True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def add_gif(ctx):
     if ctx.options.action not in get_all_action_names():
@@ -47,39 +47,43 @@ async def add_gif(ctx):
         return
 
     action_file_name = "C:/Users/Cookie/Documents/GitHub/AruDiscordBot/action_gifs/" + f"action_{ctx.options.action}_gifs.txt"
-    action_file = open(action_file_name, 'a')
+    
     gif_links = ctx.options.gif_link.split()
     broken_gif_links = []
+    already_added_links = []
+    added_links = []
     for link in gif_links:
         revised_gif_link = link
         if not revised_gif_link.endswith(".gif"): # if url does not end with ".gif", extract gif link from URL
             revised_gif_link = extract_gif_link_from_url(revised_gif_link)
         
         if revised_gif_link == -1: # if gif link is broken
-            broken_gif_links.append(revised_gif_link)
+            broken_gif_links.append("<a:purpleheart:1012784670687100999> `" + str(link) + "`")
         
         else:
-            new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(ctx.author.id) + '|' + revised_gif_link
-            action_file.write(new_line)
-            action_file.write('\n')
-    action_file.close()
+            with open(action_file_name) as f:
+                if revised_gif_link in f.read():
+                    already_added_links.append("<a:purpleheart:1012784670687100999> `" + str(revised_gif_link) + "`")
+                
+                else:
+                    new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(ctx.author.id) + '|' + revised_gif_link
+                    with open(action_file_name, 'a') as f:
+                        f.write(new_line + '\n')
+                    added_links.append("<a:purpleheart:1012784670687100999> `" + str(revised_gif_link) + "`")
 
-    broken_gif_links_string = ""
-    for link in broken_gif_links:
-        broken_gif_links_string += f"{link}\n"
+    broken_gif_links_string = "\n".join(broken_gif_links)
+    already_added_links_string = "\n".join(already_added_links)
+    added_links_string = "\n".join(added_links)
 
-    if len(gif_links) == 1:
-        if len(broken_gif_links) > 0:
-            await ctx.respond("Sorry, but that GIF link appears to be invalid. Please try again! <a:kirbydeeono:1011803865164816384>", flags = hikari.MessageFlag.EPHEMERAL)
-        else:
-            await ctx.respond("GIF successfully added. Thank you for your contribution! <:kirbyblowkiss:1011481542712897548>")
-    elif len(gif_links) > 1:
-        if len(broken_gif_links) == len(gif_links):
-            await ctx.respond("Sorry, but your GIF links are invalid. Please make sure your URLs are correct and try again! <a:kirbydeeono:1011803865164816384>", flags = hikari.MessageFlag.EPHEMERAL)
-        elif len(broken_gif_links) > 0:
-            await ctx.respond("Only some of the GIFs were added. The following provided URL(s) could not be added: {broken_gif_links_string} \nPlease check to make sure the URLs are valid and try again! <a:kirbydeeono:1011803865164816384>", flags = hikari.MessageFlag.EPHEMERAL)
-        else:
-            await ctx.respond("GIFs successfully added. Thank you so much for your contribution! <:kirbyblowkiss:1011481542712897548><:kirbyblowkiss:1011481542712897548><:kirbyblowkiss:1011481542712897548>")
+    response = ""
+    if len(added_links) > 0:
+        response += f"\nThe following URL(s) have successfully been added to the database for the `{ctx.options.action}` command:\n{added_links_string}\nThank you so much for your contribution! <:kirbyblowkiss:1011481542712897548>"
+    if len(already_added_links) > 0:
+        response += f"\n\nThe following URL(s) have already been added to the database by another user:\n{already_added_links_string}\nGood taste! <a:kirbywink:1011481550577213450>"
+    if len(broken_gif_links) > 0:
+        response += f"\n\nThe following URL(s) could not be added:\n{broken_gif_links_string}\nPlease check to make sure the URLs are valid and try again! <a:kirbydeeono:1011803865164816384>"    
+
+    await ctx.respond(response)
 
 # Method called by all action commands
 async def perform_action(ctx, action_name, action_string, response_text):

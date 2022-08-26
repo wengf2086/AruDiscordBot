@@ -12,9 +12,9 @@ flavorTextChannel = 1009180448003465316
 @plugin.listener(hikari.GuildMessageCreateEvent) # Declarator for our function
 async def print_message(event):
     if str(event.content).lower() == "ily aru":
-        await plugin.app.rest.create_message(channel = event.channel_id, content = "ily2 :3c")
+        await plugin.app.rest.create_message(channel = event.channel_id, content = "ily2 :3c", reply = event.message)
     elif str(event.content).lower() == "poyo":
-        await plugin.app.rest.create_message(channel = event.channel_id, content = "Poyo poyo!", attachment = 'https://i.ytimg.com/vi/EsMS1ziIpxU/maxresdefault.jpg')
+        await plugin.app.rest.create_message(channel = event.channel_id, content = "Poyo poyo!", attachment = 'https://i.pinimg.com/564x/1e/0e/18/1e0e18550040066dcea3a4b2801e342f.jpg', reply = event.message)
 
     print(str(event.message.created_at.strftime("%m/%d/%y, %H:%M:%S")) + f" [{event.get_guild().name}, #{str(event.get_channel())}] " + str(event.author) + ": ", end ="")
     if event.content:
