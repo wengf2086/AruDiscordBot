@@ -24,6 +24,9 @@ async def print_message(event):
         print("attachment(s): ", end = "")
         for attachment in event.message.attachments:
             print(attachment.url + ", ")
+
+    if len(event.message.embeds) != 0:
+        print("sent an embed")
     
 # When the bot is started
 @plugin.listener(hikari.StartedEvent)

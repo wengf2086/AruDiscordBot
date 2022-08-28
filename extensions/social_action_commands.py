@@ -8,7 +8,7 @@ import datetime
 import os.path
 import requests
 from bs4 import BeautifulSoup
-from helper_functions import get_all_action_names
+import auxiliary
 
 plugin = lightbulb.Plugin('social_action_commands')
 log_file_name = "log.txt"
@@ -42,7 +42,7 @@ async def social_action(ctx):
 @lightbulb.command('addgif', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.', auto_defer = True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def add_gif(ctx):
-    if ctx.options.action not in get_all_action_names():
+    if ctx.options.action not in auxiliary.get_all_action_names():
         await ctx.respond("Sorry, I couldn't find an action with that name. Please try again! <a:kirbydeeono:1011803865164816384>")
         return
 
@@ -283,5 +283,6 @@ async def action_wink(ctx):
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_yeet(ctx):
     await perform_action(ctx, "yeet", ", you have been yeeted by ", "YEET!")
+
 def load(bot):
     bot.add_plugin(plugin)

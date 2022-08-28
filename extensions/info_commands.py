@@ -2,7 +2,7 @@ import hikari
 import lightbulb
 import datetime
 from bot import servers
-import helper_functions
+import auxiliary
 
 plugin = lightbulb.Plugin('info_commands')
 start_time = None
@@ -156,17 +156,12 @@ async def aru_info(ctx):
     uptime_seconds = int(uptime)
 
     # Action Commands Info
-    action_names_string = f"{' '.join(['`' + action_name + '`' for action_name in helper_functions.get_all_action_names()])}"
+    action_names_string = f"{' '.join(['`' + action_name + '`' for action_name in auxiliary.get_all_action_names()])}"
     info_action_name = "<:kirbyexclamation:1011482105655595090> /action commands:"
     info_action_value = f"Get a random anime GIF of a specific action and direct it towards another user!\
                           \n{action_names_string}\
                           \n\nDid you know you can add your own GIFs? Find out how:\
                           \n`/info command addgif`"
-
-    # Channel Management Commands Info
-    info_channel_management_name = "<:kirbyblush:1011481544017318019> /channel commands (Admin Only):"
-    info_channel_management_value = "Manage users in voice channels!\
-                                    \n`WIP!!`"
 
     # Fun Commands Info
     info_fun_name = "<:kirbytongue:1011481549637697627> /fun commands:"
@@ -182,7 +177,7 @@ async def aru_info(ctx):
     # Music Commands Info
     info_music_name = "<a:kirbeats:1009554827098988574> /music commands:"
     info_music_value = "Play music!\
-                        \n`Also WIP!!`"
+                        \n`WIP!!`"
 
     # Suggestion Info
     
@@ -191,17 +186,16 @@ async def aru_info(ctx):
         .set_thumbnail(member.avatar_url)\
         .add_field(name = f"<a:pinkheart:1012788247556018319> Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
         .add_field(name = "<a:pinkheart:1012788247556018319> Total Server Count", value = f"Currently in {len(servers)} servers", inline = True)\
-        .add_field(name = "<a:pinkheart:1012788247556018319> My Birthday", value = str(member.created_at)[:19], inline = False)\
+        .add_field(name = "<a:pinkheart:1012788247556018319> My User ID", value = member.id, inline = False)\
+        .add_field(name = "<a:pinkheart:1012788247556018319> My Birthday", value = str(member.created_at)[:19], inline = True)\
         .add_field(name = "<a:pinkheart:1012788247556018319> My Creator", value = f"{display_creator}", inline = True)\
-        .add_field(name = "<a:pinkheart:1012788247556018319> My User ID", value = member.id, inline = True)\
         .add_field(name = info_action_name, value = info_action_value, inline = False)\
-        .add_field(name = info_channel_management_name, value = info_channel_management_value, inline = False)\
         .add_field(name = info_fun_name, value = info_fun_value, inline = False)\
         .add_field(name = info_info_name, value = info_info_value, inline = False)\
         .add_field(name = info_music_name, value = info_music_value, inline = False)\
         .add_field(name = "<:kirbylightbulb:1011482108147011593> Got a question, comment, or suggestion?", value = "Let your heart out with the `/feedback` command. I'll listen to whatever you have to say... ", inline = False)\
         .set_footer(text = f"Current Uptime: {uptime_days} days, {uptime_hours} hours, {uptime_minutes} minutes, {uptime_seconds} seconds. Thanks for having me! ❤️", icon = member.avatar_url)
-        .set_author(name = "So you want to get to know me better, huh?", icon = ctx.get_guild().icon_url)\
+        .set_author(name = "More About Aru", icon = ctx.get_guild().icon_url)\
     )
 
 @get_info.child
@@ -231,7 +225,7 @@ async def aru_info(ctx):
 @lightbulb.command('feedback', 'Got a question, comment, or suggestion? Share it with this command!')
 @lightbulb.implements(lightbulb.SlashCommand, lightbulb.PrefixCommand)
 async def feedback(ctx):
-    f = open(helper_functions.log_file_name, 'a')
+    f = open(auxiliary.LOG_FILE_NAME, 'a')
     new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(ctx.author.id) + '|' + "FEEDBACK" + '|' + ctx.options.feedback + '\n'
     f.write(new_line)
     f.close()
