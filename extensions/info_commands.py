@@ -175,9 +175,9 @@ async def aru_info(ctx):
                        \n`user` `server` `pfp` `help` `commands`"
 
     # Music Commands Info
-    info_music_name = "<a:kirbeats:1009554827098988574> /music commands:"
+    info_music_name = "<a:kirbeats:1009554827098988574> /music commands: (Renovation in progress)"
     info_music_value = "Play music!\
-                        \n`WIP!!`"
+                        \n`play` `stop` `pause` `resume` `seek` `queue` `np` `repeat` `shuffle` `leave`"
 
     # Suggestion Info
     
