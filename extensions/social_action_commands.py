@@ -106,11 +106,11 @@ async def perform_action(ctx, action_name, action_string, response_text):
     # Report function
     button = plugin.app.rest.build_action_row().add_button(2, f"report|{msg.id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
     await ctx.respond(f"{response_text} This GIF was added by {gif_author.mention} at `{random_gif[0]}`.", component = button, flags = hikari.MessageFlag.EPHEMERAL)
-    await respond_to_interaction()
+    await respond_to_interaction(20)
 
-async def respond_to_interaction():
+async def respond_to_interaction(timeout):
     try:
-        event = await plugin.bot.wait_for(hikari.InteractionCreateEvent, timeout = 10)
+        event = await plugin.bot.wait_for(hikari.InteractionCreateEvent, timeout = timeout)
     except:
         print("Interaction Time-Out. Perfectly Normal :)")
         return
@@ -128,7 +128,7 @@ async def respond_to_interaction():
                 .add_option("GIF is not loading", "Broken").set_emoji(hikari.Emoji.parse("🛠️")).set_description("The GIF is not loading properly.").add_to_menu()\
                 .add_to_container()
             await event.interaction.create_initial_response(response_type = 4, content = "Are you sure you want to report this GIF?", flags = hikari.MessageFlag.EPHEMERAL, component = select_menu, embed = embed)
-            await respond_to_interaction()
+            await respond_to_interaction(20)
         
          elif(custom_id[0] == "report_reason"):
             f = open(log_file_name, 'a')
@@ -240,7 +240,7 @@ async def action_poke(ctx):
 @lightbulb.command('shoot', 'Shoot another user!')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def action_shoot(ctx):
-    await perform_action(ctx, "shoot", ", you have been shot by ", "<:kirbygun:1009321446637588480> Bang!")
+    await perform_action(ctx, "shoot", ", you have been shot by ", "<:kirbygun:1011814068987887668> Bang!")
 
 @social_action.child
 @lightbulb.option('user', 'Mention the user you want to slap!', type = hikari.User)

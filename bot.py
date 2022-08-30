@@ -9,7 +9,7 @@ import hikari # Discord API Wrapper
 import lightbulb # Command Handler for Hikari
 import lavaplayer # Nodes manager for playing music
 
-servers = 1004231179169443900, 133384813489946624, 700518641413652580
+servers = 1004231179169443900, 133384813489946624, 700518641413652580, 752188244392935487
 
 if __name__ == "__main__":
     bot = lightbulb.BotApp(
@@ -35,3 +35,5 @@ if __name__ == "__main__":
     activity = random.choice(activities)
     bot.load_extensions_from('./extensions')
     bot.run(activity = hikari.Activity(name = activity, type = random_activity_type)) # Run the bot!
+
+    
