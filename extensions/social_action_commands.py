@@ -1,19 +1,14 @@
 from asyncio.windows_events import NULL
-from dataclasses import is_dataclass
 import hikari
 import lightbulb
-import re
 import random
 import datetime
 import os.path
 import requests
 from bs4 import BeautifulSoup
-import auxiliary
+import utilities
 
 plugin = lightbulb.Plugin('social_action_commands')
-log_file_name = "log.txt"
-
-# Social Actions
 
 # Method that extracts a gif from a URL
 def extract_gif_link_from_url(url):
@@ -25,9 +20,21 @@ def extract_gif_link_from_url(url):
         for meta in metas:
             if meta.attrs.get("content").endswith(".gif"):
                 return meta.attrs.get("content")
+
         return -1
     except:
-        return -1 
+        return -1
+
+@plugin.command 
+@lightbulb.option("action_name", "Name of the action you want to use.", autocomplete=True)
+@lightbulb.command(name='action', description='test')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def action_test(ctx):
+    ctx.respond((f"Action: {ctx.option.action_name}"))
+
+@action_test.autocomplete("action_name")
+async def action_name_autocomplete(opt: hikari.AutocompleteInteractionOption, inter: hikari.AutocompleteInteraction) -> None:
+    return utilities.ACTIONS # returns a list of all action names
 
 @plugin.command 
 @lightbulb.command('action', 'Get a random anime GIF of an action and direct it to another user!')
@@ -42,7 +49,7 @@ async def social_action(ctx):
 @lightbulb.command('addgif', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.', auto_defer = True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def add_gif(ctx):
-    if ctx.options.action not in auxiliary.get_all_action_names():
+    if ctx.options.action not in utilities.get_all_action_names():
         await ctx.respond("Sorry, I couldn't find an action with that name. Please try again! <a:kirbydeeono:1011803865164816384>")
         return
 
@@ -131,7 +138,7 @@ async def respond_to_interaction(timeout):
             await respond_to_interaction(20)
         
          elif(custom_id[0] == "report_reason"):
-            f = open(log_file_name, 'a')
+            f = open(utilities.LOG_FILE_NAME, 'a')
             new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(event.interaction.user.id) + '|' + event.interaction.values[0] + '|' + custom_id[1] + '\n'
             f.write(new_line)
             f.close()
