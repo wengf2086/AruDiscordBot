@@ -10,7 +10,7 @@ LOG_FILE_NAME = "log.txt"
 BOT_NAME = "Aru"
 
 # Dictionaries
-ACTIONS = { # Dictionary containing actions and their respective texts
+ACTIONS = { # Contains actions and their respective texts
     'blush': "{actor} is blushing at you, {recipient}!", 
     'bonk': "{recipient}, you have been bonked by {actor}!", 
     'cuddle': "Aww! {recipient}, you are being cuddled by {actor}!", 
@@ -32,7 +32,7 @@ ACTIONS = { # Dictionary containing actions and their respective texts
     'yeet': "{recipient} has been yeeted by {actor}!"
 }
 
-STATUS_EMOJIS = {
+STATUS_EMOJIS = { # Contains emojis for each status
     "online": "<a:status_online:1014291128704585848>",
     "idle": "<a:status_idle:1014291127895068682>",
     "dnd": "<a:status_dnd:1014291126590648393>",
@@ -41,7 +41,6 @@ STATUS_EMOJIS = {
 }
 
 # Helper Functions
-
 # Return a random activity and activity type
 def get_random_activity():
     '''
@@ -75,5 +74,3 @@ def get_all_action_names():
         action_names.append(name)
 
     return action_names
-
-print(get_all_action_names())
