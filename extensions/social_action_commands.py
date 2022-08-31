@@ -100,14 +100,18 @@ async def action(ctx):
     author = await plugin.app.rest.fetch_user(gif.author_id)
     msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = action_string, embed = embed, user_mentions=True)
 
-    button = plugin.app.rest.build_action_row().add_button(2, f"report|{msg.id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
-    await ctx.respond(f"This GIF was added by {author.mention} at `{gif.date_added}`.", component = button, flags = hikari.MessageFlag.EPHEMERAL)
-    await respond_to_interaction(20)
+    # button = plugin.app.rest.build_action_row().add_button(2, f"report|{msg.id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
+    await ctx.respond(f"This GIF was added by {author.mention} at `{gif.date_added}`.", flags = hikari.MessageFlag.EPHEMERAL)
+    # await respond_to_interaction(20)
 
 @add_gif.autocomplete("action_name")
 @action.autocomplete("action_name")
 async def action_autocomplete(opt: hikari.AutocompleteInteractionOption, inter: hikari.AutocompleteInteraction) -> None:
-    return list(utilities.ACTIONS.keys())
+    matching = []
+    for action in list(utilities.ACTIONS.keys()):
+        if action.startswith(opt.value):
+            matching.append(action)
+    return matching
  
 async def respond_to_interaction(timeout):
     try:

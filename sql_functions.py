@@ -170,17 +170,3 @@ def print_all_gifs():
     for row in c.fetchall():
         print(row)
     conn.close()
-
-# Gif.add_gif('blush', 173555466176036864, 'https://c.tenor.com/d3AEjdxSfawAAAAC/anime-blush.gif', datetime.datetime.now().strftime("%m/%d/%y, %H:%M:%S"))
-dir = './action_gifs/'
-for filename in os.listdir(dir):
-    f = os.path.join(dir, filename)
-    # checking if it is a file
-    if os.path.isfile(f):
-        action = f.split("_")[2]
-        print(f"________________________________{action}________________________________")
-        with open(f, mode = 'r') as f:
-            for line in f:
-                print(f"{line.split('|')[2]}", end = "")
-
-# insert_gif(action_name = action, date = datetime.datetime.now().strftime("%m/%d/%y, %H:%M:%S"))

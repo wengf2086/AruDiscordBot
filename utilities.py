@@ -1,7 +1,11 @@
 import os.path
 from os import listdir
 import random
+import requests
+import datetime
+import os.path
 
+from sql_functions import Gif
 # Constants
 SERVERS = 1004231179169443900, 133384813489946624, 700518641413652580, 1014274983721193563
 TOKEN = 'MTAwOTE4MDIxMDgyMzk3MDk1Ng.Gk5Ed7.7yyTgguB2cq00yH6P6ZQ7atrUEOa_TQwDvudBI'
@@ -74,3 +78,31 @@ def get_all_action_names():
         action_names.append(name)
 
     return action_names
+
+# Updates database with GIFs from nekos.best API.
+def nekos_best_api_update():
+    available_actions = ["baka", "bite", "blush", "bored", "cry", "cuddle", "dance", "facepalm", "feed", "handhold", "happy", "highfive", "hug", "kick", "kiss", "laugh", "pat", "poke", "pout", "punch", "shoot", "shrug", "slap", "sleep", "smile", "smug", "stare", "think", "thumbsup", "tickle", "wave", "wink", "yeet"]
+    author_id = 173555466176036864
+    # This bot has some different names for actions; this dictioanry serves as a translator.
+    # Bot's name : nekos.best API's name
+    nekos_best_api_action_names = {
+        'holdhands': 'handhold'
+    }
+
+    for action in list(ACTIONS.keys()):
+        if action not in available_actions:
+            continue
+
+        action_name = nekos_best_api_action_names.get(action, action) # if nekos.best API has a different name, use theirs.
+        num_gifs = int(requests.get("https://nekos.best/api/v2/endpoints").json()[action_name]['max']) # Number of nekos.best API GIFs available for this action
+
+        for i in range(0, num_gifs):
+            # Fetch the GIF for this index by padding the index with zeroes to create a string of length 3, and using the following format
+            gif_link = "https://nekos.best/api/v2/" + action_name + f"/{str(i).zfill(3)}" + ".gif"
+
+            if not Gif.get_gif_from_link(gif_link): # If the link is not in the database, add it
+                Gif.add_gif(action, author_id, gif_link)
+                print(f"{action}: '{gif_link}' added")
+            else:
+                print(f"{action}: '{gif_link}' not added. Already in database")
+    return
