@@ -1,6 +1,5 @@
 import sqlite3
 import datetime
-import os
 from venv import create
 
 # Connection Object that represents our database. Can pass in a file or have an in-memory database with "_:memory:_"

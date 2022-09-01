@@ -6,11 +6,6 @@ import utilities
 
 plugin = lightbulb.Plugin('fun_commands')
 
-presets = { # Database
-    'kirby': "<a:kirbeats:1009554827098988574> <a:kirbydance:1009554839602204712> <a:kirbydance2:1009554838692044900> <a:kirbyfortnitedance:1009554841963606146> <a:kirbyhi:1009554846967414874> <a:kirbybye:1009554837064650923> <a:kirbyyay:1009554865145528501> <a:kirbyok:1009554850914242754><a:kirbylink:1009554849131675808> <a:kirbyroll:1009554852046700644> <a:kirbyrun:1009554853091082240> <a:kirbyshock:1009554854215168050> <a:kirbyspin:1009554856194867205> <a:kirbyswim:1009554860489842750> <a:kirbyuwu:1009554861739749478> <a:kirbywave:1009554864285683824> <:kirbo:1009554829141606490> <:kirby:1009554833478537377> <:kirbybuffed:1009554836255166474>",
-    'sparkles': "<a:sparkles2:1009553998447128586> <a:sparkles3:1009553999353090232> <a:sparkles4:1009554000393277513> <a:sparkles5:1009554001588662418> <a:sparkles6:1009554002515607584> <a:sparkles7:1009554003799068672> <a:sparkles8:1009554004973469807> <a:sparkles9:1009554005342560318> <a:sparkles10:1009554006462451802> <a:sparkles11:1009554007263547533> <a:sparkles12:1009554008261787658> <a:sparkles13:1009554009306189824> <a:sparkles14:1009554009985667172> <a:sparkles15:1009554010920992918> <a:sparkles16:1009554011764031608><a:pinkstars:855509222635733032><a:sparkles1:1009553997054619669><a:sparkles11:1009554007263547533> <a:sparkles16:1009554011764031608>"
-}
-
 @plugin.command 
 @lightbulb.app_command_permissions()
 @lightbulb.command('fun', 'Fun commands!')
@@ -19,34 +14,62 @@ async def fun(ctx):
     pass
 
 @fun.child
-@lightbulb.option('emojis', 'emojis / preset to be used as reactions. Only default emojis and emojis from this server allowed.', type = str, required = True)
+@lightbulb.option('server_id', 'Server to search for emojis. If unspecified, will search all emojis the bot is in.', required = False)
 @lightbulb.option('message_id', 'ID of the message to be bombed. Will bomb the most recent message if not specified.', required = False)
-@lightbulb.command('reactbomb', '\'Bombs\' a message with a bunch of (MAX: 20) reactions!')
+@lightbulb.option('string', 'string to be contained in emojis', type = str, required = True)
+@lightbulb.command('reactbomb', '\'Bombs\' a message with a bunch of random reactions containing a specified string.')
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def reactbomb(ctx):
-    all_emojis = await ctx.get_guild().fetch_emojis()
-    str = ""
-    for emoji in all_emojis:
-        str += f"{emoji} "
-    print(str)
-    if ctx.options.message_id: # message is specified
+    if ctx.options.message_id: # if a message is specified
         message = ctx.options.message_id
-    else: # no message specified, react to last message
+    else: # if no message specified, fetch last message
         channel = await plugin.app.rest.fetch_channel(channel = ctx.channel_id)
         message = channel.last_message_id
 
-    if  presets.get(ctx.options.emojis, "NONE") != "NONE":
-        emojis = presets.get(ctx.options.emojis, "NONE")
-
-    elif ctx.options.emojis:
-        emojis = ctx.options.emojis
+    # get all emojis that contain the specified string
+    emojis = []
+    servers = [int(ctx.options.server_id)] if ctx.options.server_id else utilities.SERVERS
+    for server in servers:
+        server_emojis = await plugin.app.rest.fetch_guild_emojis(guild = server)
+        for emoji in server_emojis:
+            if ctx.options.string in emoji.name:
+                emojis.append(emoji)
     
-    else:
-        ctx.respond("Error: Invalid preset or emoji. Only default emojis and emojis from this server allowed. Please try again!")
+    random.shuffle(emojis) # shuffle emojis
+    num_reactions = len(emojis) if len(emojis) < 20 else 20
 
-    for emoji_str in emojis.split(" "):
-        emoji = hikari.Emoji.parse(emoji_str)
-        await plugin.app.rest.add_reaction(channel = ctx.channel_id, message = message, emoji = emoji)
+    for i in range(0, num_reactions):
+        await plugin.app.rest.add_reaction(channel = ctx.channel_id, message = message, emoji = emojis[i])
+
+@fun.child
+@lightbulb.option('server_id', 'Server to search for emojis. If unspecified, will search all emojis the bot is in.', required = False)
+@lightbulb.option('string', 'string to be contained in emojis', type = str, required = True)
+@lightbulb.command('emojibomb', 'Sends bunch of random emojis containing a specified string.')
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def emojibomb(ctx):
+    if ctx.options.message_id: # if a message is specified
+        message = ctx.options.message_id
+    else: # if no message specified, fetch last message
+        channel = await plugin.app.rest.fetch_channel(channel = ctx.channel_id)
+        message = channel.last_message_id
+
+    # get all emojis that contain the specified string
+    emojis = []
+    servers = [int(ctx.options.server_id)] if ctx.options.server_id else utilities.SERVERS
+    for server in servers:
+        server_emojis = await plugin.app.rest.fetch_guild_emojis(guild = server)
+        for emoji in server_emojis:
+            if ctx.options.string in emoji.name:
+                emojis.append(emoji)
+    
+    random.shuffle(emojis) # shuffle emojis
+    num_reactions = len(emojis) if len(emojis) < 20 else 20
+
+    content += f"{emojis[i].mention} "
+    for i in range(0, num_reactions):
+        content += f"{emojis[i].mention} "
+    
+    await plugin.app.rest.create_message(channel = ctx.channel_id, content = content)
 
 @fun.child
 @plugin.command

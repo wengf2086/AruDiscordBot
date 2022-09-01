@@ -6,12 +6,22 @@ import datetime
 import os.path
 
 from sql_functions import Gif
+
+import lavaplayer
 # Constants
-SERVERS = 1004231179169443900, 133384813489946624, 700518641413652580, 1014274983721193563
+SERVERS = 1004231179169443900, 133384813489946624, 700518641413652580, 1014274983721193563, 752188244392935487
 TOKEN = 'MTAwOTE4MDIxMDgyMzk3MDk1Ng.Gk5Ed7.7yyTgguB2cq00yH6P6ZQ7atrUEOa_TQwDvudBI'
 PREFIX = "a!"
 LOG_FILE_NAME = "log.txt"
+FLAVOR_TEXT_CHANNEL = 1014275372856123424
 BOT_NAME = "Aru"
+
+LAVALINK = lavaplayer.Lavalink( # Lavalink object
+    host="78.108.218.93",
+    port=25538,
+    password="mysparkedserver",
+    user_id=173555466176036864
+)
 
 # Dictionaries
 ACTIONS = { # Contains actions and their respective texts
@@ -43,6 +53,37 @@ STATUS_EMOJIS = { # Contains emojis for each status
     "offline": "<:status_offline:1014291125462376460>",
     "mobile": "<:status_mobile:1014291800980197396>"
 }
+
+# Emoji Presets to add flavor.
+FLAVOR_ARU = {
+    "primary_option": "<a:opt_pinkheart:1014660317822853182>",
+    "secondary_option": "<a:opt_purpleheart:1014660319009841213>",
+    "num_0": "<a:num_0:1014659975324377128>",
+    "num_1": "<a:num_1:1014659976339390505>",
+    "num_2": "<a:num_2:1014659977710948373>",
+    "num_3": "<a:num_3:1014659979225075814>",
+    "num_4": "<a:num_4:1014659980437242007>",
+    "num_5": "<a:num_5:1014659981783597066>",
+    "num_6": "<a:num_6:1014659983549403207>",
+    "num_7": "<a:num_7:1014659985126477874>",
+    "num_8": "<a:num_8:1014659986326028348>",
+    "num_9": "<a:num_9:1014659987865358457>",
+    "left_arrow": "<:frogarrowleft:1014669467017564160>",
+    "right_arrow": "<:frogarrowright:1014669467965472799>",
+    "greeting_1":"<a:kirbyhi1:1014664333621473370>",
+    "greeting_2":"<a:kirbyhi2:1014664334300938342>",
+    "wink":"<a:kirbywink:1014664340068122755>",
+    "kiss":"<:kirbykiss:1014664335529881651>",
+    "ohno":"<a:kirbydeeohno:1014664330559623269>",
+    "exclamation":"<:kirbyexclamation:1014664332166037646>",
+    "tongue":"<:kirbytongue:1014664339086643240>",
+    "question":"<:kirbyquestion:1014664338247798834>",
+    "music":"<a:kirbeats:1014664329666248815>",
+    "lightbulb":"<:kirbylightbulb:1014664337077579866>",
+    "sleepy":"<:kirbysleeby:1014670220868198572>"
+}
+
+FLAVOR = FLAVOR_ARU
 
 # Helper Functions
 # Return a random activity and activity type

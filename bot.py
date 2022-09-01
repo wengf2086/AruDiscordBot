@@ -12,7 +12,7 @@ if __name__ == "__main__":
     bot = lightbulb.BotApp(
             token = utilities.TOKEN, 
             default_enabled_guilds = utilities.SERVERS,
-            intents = hikari.Intents.ALL_UNPRIVILEGED | hikari.Intents.GUILD_PRESENCES,
+            intents = hikari.Intents.ALL_UNPRIVILEGED | hikari.Intents.GUILD_PRESENCES | hikari.Intents.GUILD_MESSAGE_REACTIONS,
             prefix = utilities.PREFIX
     ) # Instantiate our bot
 

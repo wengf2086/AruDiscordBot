@@ -37,8 +37,9 @@ def extract_gif_link_from_url(url):
 @lightbulb.command('addgif', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.', auto_defer = True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def add_gif(ctx):
+    action_name = ctx.options.action_name.lower()
     # Check if action name is valid
-    if ctx.options.action_name not in list(utilities.ACTIONS.keys()):
+    if action_name not in list(utilities.ACTIONS.keys()):
         await ctx.respond("Sorry, I couldn't find an action with that name. Please try again! <a:kirbydeeono:1011803865164816384>")
         return
 
@@ -59,7 +60,7 @@ async def add_gif(ctx):
                 already_added_links.append(link)
 
             else: # if not in the database, add it
-                Gif.add_gif(action_name=ctx.options.action_name, author_id=ctx.author.id, gif_link=revised_link)
+                Gif.add_gif(action_name=action_name, author_id=ctx.author.id, gif_link=revised_link)
                 added_links.append(link)
 
     response = ""
@@ -67,7 +68,7 @@ async def add_gif(ctx):
     already_added_links_string = "\n".join(already_added_links)
     added_links_string = "\n".join(added_links)
     if len(added_links) > 0:
-        response += f"\nThe following URL(s) have successfully been added to the database for the `{ctx.options.action_name}` command:\n{added_links_string}\nThank you so much for your contribution! <:kirbyblowkiss:1011481542712897548>"
+        response += f"\nThe following URL(s) have successfully been added to the database for the `{action_name}` command:\n{added_links_string}\nThank you so much for your contribution! <:kirbyblowkiss:1011481542712897548>"
     if len(already_added_links) > 0:
         response += f"\n\nThe following URL(s) have already been added to the database by another user:\n{already_added_links_string}\nGood taste! <a:kirbywink:1011481550577213450>"
     if len(broken_gif_links) > 0:
@@ -84,17 +85,18 @@ async def add_gif(ctx):
 @lightbulb.command('action', 'Get a random anime GIF of an action and direct it at another user!')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def action(ctx):
+    action_name = ctx.options.action_name.lower()
     # Check if action name is valid
-    if ctx.options.action_name not in list(utilities.ACTIONS.keys()):
+    if action_name not in list(utilities.ACTIONS.keys()):
         await ctx.respond("Sorry, I couldn't find an action with that name. Please try again! <a:kirbydeeono:1011803865164816384>")
         return
 
     actor = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = ctx.author)
     recipient = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = ctx.options.user)
 
-    action_string = utilities.ACTIONS.get(ctx.options.action_name).format(recipient = recipient.mention, actor = actor.mention)
+    action_string = utilities.ACTIONS.get(action_name).format(recipient = recipient.mention, actor = actor.mention)
 
-    gif = Gif.get_random_gif(action_name = ctx.options.action_name)
+    gif = Gif.get_random_gif(action_name = action_name)
     embed = hikari.Embed(color = hikari.Color(0xc38ed5)).set_image(gif.link)
 
     author = await plugin.app.rest.fetch_user(gif.author_id)
@@ -103,6 +105,9 @@ async def action(ctx):
     # button = plugin.app.rest.build_action_row().add_button(2, f"report|{msg.id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
     await ctx.respond(f"This GIF was added by {author.mention} at `{gif.date_added}`.", flags = hikari.MessageFlag.EPHEMERAL)
     # await respond_to_interaction(20)
+
+    if recipient.id == 1009180210823970956:
+        await ctx.respond(attachment = 'action_response.png')
 
 @add_gif.autocomplete("action_name")
 @action.autocomplete("action_name")

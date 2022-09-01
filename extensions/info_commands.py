@@ -111,11 +111,11 @@ async def get_info_on_server(ctx):
             .set_thumbnail(guild.icon_url)\
             .add_field(name = "Server Owner", value = (await guild.fetch_owner()).mention, inline = True)\
             .add_field(name = "Server ID", value = guild.id, inline = True)\
-            .add_field(name = "Server Created On", value = guild.created_at.strftime("%m/%d/%Y, %H:%M:%S"), inline = True)\
+            .add_field(name = "Server Created On", value = guild.created_at.strftime("%m/%d/%y, %H:%M:%S"), inline = True)\
             .add_field(name = "Member Count", value = f"{guild.member_count} ({human_count} user{'s' if human_count > 1 else ''}, {bot_count} bot{'s' if bot_count > 1 else ''})", inline = True)\
             .add_field(name = "Channel Count", value = f"{voice_count + text_count} ({text_count} text, {voice_count} voice)", inline = True)\
             .add_field(name = "Role Count", value = f"{len(guild.get_roles()) - 1}", inline = True)\
-            .add_field(name = "Server Boost Level", value = "No Boosts" if not guild.premium_tier else guild.premium_tier + "(" + str(guild.premium_subscription_count) + " Boosts)", inline = False)
+            .add_field(name = "Server Boost Level", value = "No Boosts" if not guild.premium_tier else str(guild.premium_tier).replace("TIER_","Tier ") + " (" + str(guild.premium_subscription_count) + " Boosts)", inline = False)
 
     await ctx.respond(embed = embed)
 
@@ -160,7 +160,7 @@ async def aru_info(ctx):
     pretext = f"Hi, I'm {member.mention}. "
     if member.display_name != member.username:
         pretext += "Wait, did someone change my name...? Anyways, my _real_ name is Aru. "
-    pretext += "Nice to meet you! <a:kirbywave:1009554864285683824>"
+    pretext += f"Nice to meet you! {utilities.FLAVOR.get('greeting_1')}"
     description = pretext + ""
     uptime = (datetime.datetime.now() - start_time).total_seconds()
     uptime_days = int(uptime // 86400)
@@ -172,44 +172,46 @@ async def aru_info(ctx):
     uptime_seconds = int(uptime)
 
     # Action Commands Info
-    action_names_string = f"{' '.join(['`' + action_name + '`' for action_name in utilities.get_all_action_names()])}"
-    info_action_name = "<:kirbyexclamation:1011482105655595090> /action commands:"
+    action_names_string = f"{' '.join(['`' + action_name + '`' for action_name in list(utilities.ACTIONS.keys())])}"
+    info_action_name = f"{utilities.FLAVOR.get('exclamation')} /action commands:"
     info_action_value = f"Get a random anime GIF of a specific action and direct it towards another user!\
                           \n{action_names_string}\
                           \n\nDid you know you can add your own GIFs? Find out how:\
                           \n`/info command addgif`"
 
     # Fun Commands Info
-    info_fun_name = "<:kirbytongue:1011481549637697627> /fun commands:"
+    info_fun_name = f"{utilities.FLAVOR.get('tongue')} /fun commands:"
     info_fun_value = "Miscellaneous commands that do random fun things!"
     info_fun_value += "\n`reactbomb`: Adds multiple (max: 20) emojis to a message."
     info_fun_value += "\n\n`8ball`: Ask the Magic 8-Ball™ a yes/no question!"
     
     # Info Commands... Info
-    info_info_name = "<:kirbyquestion:1011482109229158500> /info commands:"
+    info_info_name = f"{utilities.FLAVOR.get('question')} /info commands:"
     info_info_value = "Get info about a user, this server, me, or a specific command!\
                        \n`user` `server` `pfp` `help` `commands`"
 
     # Music Commands Info
-    info_music_name = "<a:kirbeats:1009554827098988574> /music commands: (Renovation in progress)"
+    info_music_name = f"{utilities.FLAVOR.get('music')} /music commands: (Renovation in progress)"
     info_music_value = "Play music!\
-                        \n`play` `stop` `pause` `resume` `seek` `queue` `np` `repeat` `shuffle` `leave`"
+                        \n`play` `stop` `pause` `resume` `seek` `queue` `np` `move` `remove` `repeat` `shuffle` `leave`"
 
-    # Suggestion Info
+    # Feedback Command Info
+    info_feedback_name = f"{utilities.FLAVOR.get('lightbulb')} Got a question, comment, or suggestion?"
+    info_feedback_value = "Let your heart out with the `/feedback` command. I'll listen to whatever you have to say... "
     
     # create embed to display information
-    await ctx.respond(hikari.Embed(title = f"<a:kirbyhi:1009554846967414874> About Me", description = description, color = hikari.Color(0xc38ed5))\
+    await ctx.respond(hikari.Embed(title = f"{utilities.FLAVOR.get('greetings_2')} About Me", description = description, color = hikari.Color(0xc38ed5))\
         .set_thumbnail(member.avatar_url)\
-        .add_field(name = f"<a:pinkheart:1012788247556018319> Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
-        .add_field(name = "<a:pinkheart:1012788247556018319> Total Server Count", value = f"Currently in {len(utilities.SERVERS)} servers", inline = True)\
-        .add_field(name = "<a:pinkheart:1012788247556018319> My User ID", value = member.id, inline = False)\
-        .add_field(name = "<a:pinkheart:1012788247556018319> My Birthday", value = str(member.created_at)[:19], inline = True)\
-        .add_field(name = "<a:pinkheart:1012788247556018319> My Creator", value = f"{display_creator}", inline = True)\
+        .add_field(name = f"{utilities.FLAVOR.get('primary_option')} Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
+        .add_field(name = f"{utilities.FLAVOR.get('primary_option')} Total Server Count", value = f"Currently in {len(utilities.SERVERS)} servers", inline = True)\
+        .add_field(name = f"{utilities.FLAVOR.get('primary_option')} My User ID", value = member.id, inline = False)\
+        .add_field(name = f"{utilities.FLAVOR.get('primary_option')} My Birthday", value = str(member.created_at)[:19], inline = True)\
+        .add_field(name = f"{utilities.FLAVOR.get('primary_option')} My Creator", value = f"{display_creator}", inline = True)\
         .add_field(name = info_action_name, value = info_action_value, inline = False)\
         .add_field(name = info_fun_name, value = info_fun_value, inline = False)\
         .add_field(name = info_info_name, value = info_info_value, inline = False)\
         .add_field(name = info_music_name, value = info_music_value, inline = False)\
-        .add_field(name = "<:kirbylightbulb:1011482108147011593> Got a question, comment, or suggestion?", value = "Let your heart out with the `/feedback` command. I'll listen to whatever you have to say... ", inline = False)\
+        .add_field(name = info_feedback_name, value = info_feedback_value, inline = False)\
         .set_footer(text = f"Current Uptime: {uptime_days} days, {uptime_hours} hours, {uptime_minutes} minutes, {uptime_seconds} seconds. Thanks for having me! ❤️", icon = member.avatar_url)
         .set_author(name = "More About Aru", icon = ctx.get_guild().icon_url)\
     )
@@ -217,23 +219,14 @@ async def aru_info(ctx):
 @get_info.child
 @lightbulb.app_command_permissions(dm_enabled=True)
 @lightbulb.option('command_name','Which command would you like to learn more about?')
-@lightbulb.command('command', 'Learn more about a specific command! (Supported commands: \'addgif\', \'reactbomb\')')
+@lightbulb.command('command', 'Learn more about a specific command! (Supported commands: \'addgif\')')
 @lightbulb.implements(lightbulb.SlashSubCommand, lightbulb.PrefixCommand)
 async def command_info(ctx):
-    # await ctx.respond("This command is in the works. Sorry about that!! <:kirbyblush:1011481544017318019>")
     if ctx.options.command_name == "addgif":
-        await ctx.respond("<a:rightarrow:1012784974899990571> Usage: `/action addgif [action name] [gif_link_1, gif_link_2, ..., gif_link_10]`\
-                           \n<a:purpleheart:1012784670687100999> This command allows you to add your own GIF link(s) for a specific `/action` command.\
-                           \n<a:purpleheart:1012784670687100999> If a GIF is successfully added, it has a chance to show up when a user calls the respective action command.\
-                           \n<a:purpleheart:1012784670687100999> Sample Usage: `/action addgif bonk https://tenor.com/view/bonk-gif-21852548 https://c.tenor.com/9Q95PaJTxSYAAAAd/ina-bonk.gif`", flags = hikari.MessageFlag.EPHEMERAL)
-
-    elif ctx.options.command_name == "reactbomb":
-        await ctx.respond("<a:rightarrow:1012784974899990571> Usage: `/fun reactbomb [emojis or preset name] [message_id (optional)]`\
-                           \n<a:purpleheart:1012784670687100999> This command reacts with the specified emojis to a specific message, or the most recent message if no message is specified.\
-                           \n<a:purpleheart:1012784670687100999> You can specify up to 20 emojis in the [emojis or preset name] parameter. These emojis must be available in the server you are calling the command in.\
-                           \n<a:purpleheart:1012784670687100999> You can also specify a preset name instead of emojis. This will react with 20 random custom emojis from the preset.\
-                           \n<a:purpleheart:1012784670687100999> Currently available presets: \"kirby\", \"sparkles\". To be added: \"jam\", \"pog\". Suggest your own preset with `/feedback`!\
-                           \n<a:purpleheart:1012784670687100999> Sample Usage: `/fun reactbomb :kirbyhappy: :kirbysit:`", flags = hikari.MessageFlag.EPHEMERAL)
+        await ctx.respond(f"{utilities.FLAVOR.get('primary_option')} Usage: `/action addgif [action name] [gif_link_1, gif_link_2, ..., gif_link_10]`\
+                           \n{utilities.FLAVOR.get('secondary_option')} This command allows you to add your own GIF link(s) for a specific `/action` command.\
+                           \n{utilities.FLAVOR.get('secondary_option')} If a GIF is successfully added, it has a chance to show up when a user calls the respective action command.\
+                           \n{utilities.FLAVOR.get('secondary_option')} Sample Usage: `/action addgif bonk https://tenor.com/view/bonk-gif-21852548 https://c.tenor.com/9Q95PaJTxSYAAAAd/ina-bonk.gif`", flags = hikari.MessageFlag.EPHEMERAL)
 
     else:
         await ctx.respond(f"No command info found for `{ctx.options.command_name}`.")
@@ -249,7 +242,7 @@ async def feedback(ctx):
     f.write(new_line)
     f.close()
     await ctx.respond(response_type = 4, content = f"Your comment: `{ctx.options.feedback}`\
-                                                     \nThank you for helping Aru become a better bot! Your feedback is much appreciated and will be taken into consideration. <:kirbyheart:1011481547133702214>", flags = hikari.MessageFlag.EPHEMERAL)
+                                                     \nThank you for helping Aru become a better bot! Your feedback is much appreciated and will be taken into consideration. {utilities.FLAVOR.get('kirbykiss')}", flags = hikari.MessageFlag.EPHEMERAL)
 
 def load(bot):
     bot.add_plugin(plugin)

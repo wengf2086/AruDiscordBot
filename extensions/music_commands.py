@@ -7,16 +7,11 @@ import asyncio
 import uuid
 import math
 
+import utilities
+
 plugin = lightbulb.Plugin('music_commands')
 
-lavalink = lavaplayer.Lavalink( # Lavalink object
-    host="78.108.218.93",
-    port=25538,
-    password="mysparkedserver",
-    user_id=173555466176036864
-)
-
-is_paused = False
+lavalink = utilities.LAVALINK
 
 @plugin.listener(hikari.StartedEvent) # Connect Lavalink when Bot Starts
 async def on_start(event: hikari.StartedEvent):
@@ -50,6 +45,7 @@ def convert_to_milliseconds(hms):
     seconds = (int)(time[2])
     return hours * 3600000 + minutes * 60000 + seconds * 1000
 
+# Given a list of tracks, get the total length of the list
 def get_total_length_of_tracks(tracklist):
     sum_in_milliseconds = 0
     for track in tracklist:
@@ -112,39 +108,42 @@ async def play(ctx):
         return
     
     number_emojis = { # emojis for numbering the query results
-        1 : "<a:num_1:1013543442242097263>",
-        2: "<a:num_2:1013543441113829487>",
-        3: "<a:num_3:1013543439499022476>",
-        4: "<a:num_4:1013543437934534656>",
-        5: "<a:num_5:1013543436726566972>"
+        1 : utilities.FLAVOR.get('num_1'),
+        2: utilities.FLAVOR.get('num_2'),
+        3: utilities.FLAVOR.get('num_3'),
+        4: utilities.FLAVOR.get('num_4'),
+        5: utilities.FLAVOR.get('num_5')
     }
 
     if isinstance(result, list) and len(result) > 1: # A query, not a URL. Show query and allow user to select an option.
-        unique_id = uuid.uuid1() # 36 character unique identifier to receive unique interaction responses
+        unique_id = str(uuid.uuid1()) # 36 character unique identifier to receive unique interaction responses
         display_query = ""
         buttons = plugin.app.rest.build_action_row()
         display_len = 5 if len(result) >= 5 else len(result)
         for i in range(display_len): # [{i.title}]({i.uri})
-            display_query += f"<a:pinkheart:1012788247556018319>{number_emojis.get(i+1)} [{result[i].title}]({result[i].uri}) ({convert_milliseconds(result[i].length)})\n\n"
+            display_query += f"{utilities.FLAVOR.get('primary_option')}{number_emojis.get(i+1)} [{result[i].title}]({result[i].uri}) ({convert_milliseconds(result[i].length)})\n\n"
             buttons.add_button(2, f"qs|{i}|{unique_id}").set_emoji(hikari.Emoji.parse(number_emojis.get(i+1))).add_to_container()
         
         embed = hikari.Embed(title = f"Select a song to add to the queue!", description = display_query, color = hikari.Color(0xc38ed5))\
-        .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
         .set_author(name = f"Query Results For: \"{query}\"", icon = plugin.app.get_me().avatar_url)
         
         initial_response = await ctx.respond(embed = embed, component = buttons)
-        query_selection = await respond_to_interaction(15, str(unique_id))
+        query_selection = await respond_to_interaction(15, str(unique_id), ctx.author.id)
         if query_selection == -1: # Response time-out
-            await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), content = "No song was selected. The query has been cancelled.", embed = None, component = None)
+            embed = hikari.Embed(title = f"No song selected", \
+                                 description = f"No song was selected, so nothing was added to the queue.", \
+                                 color = hikari.Color(0xc38ed5)) \
+            .set_author(name = f"Nothing was added to the queue.", icon = plugin.app.get_me().avatar_url)
+            await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
             return
         else:
             await lavalink.play(ctx.guild_id, result[query_selection], ctx.author.id)
-            embed = hikari.Embed(title = f"Song Selected:", \
-                                 description = f"<a:pinkheart:1012788247556018319>{number_emojis.get(query_selection+1)} [{result[query_selection].title}]({result[query_selection].uri}) ({convert_milliseconds(result[query_selection].length)})", \
+            embed = hikari.Embed(title = f"Song selected:", \
+                                 description = f"{utilities.FLAVOR.get('primary_option')} {number_emojis.get(query_selection+1)} [{result[query_selection].title}]({result[query_selection].uri}) ({convert_milliseconds(result[query_selection].length)})", \
                                  color = hikari.Color(0xc38ed5)) \
             .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
             .set_author(name = f"The following song has been added to the queue.", icon = plugin.app.get_me().avatar_url)
-            await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), content = f"A song has been selected.", embed = embed, component = None)
+            await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
         return
 
     else: # A URL
@@ -153,28 +152,30 @@ async def play(ctx):
             playlist_url = f"https://www.youtube.com/playlist?{query[query.index('list='):]}"
             single_url = query[:query.index('&list=')]
             result = await lavalink.auto_search_tracks(single_url)
-            requested_song = f"<a:pinkheart:1012788247556018319> [{result[0].title}]({result[0].uri}) ({convert_milliseconds(result[0].length)})"
+            playlist_result = await lavalink.auto_search_tracks(playlist_url)
+            requested_song = f"{utilities.FLAVOR.get('primary_option')} [{result[0].title}]({result[0].uri}) ({convert_milliseconds(result[0].length)})"
             buttons = plugin.app.rest.build_action_row()
             buttons.add_button(3, f"pl|1|{unique_id}").set_label("Yes").add_to_container()
             buttons.add_button(4, f"pl|0|{unique_id}").set_label("No").add_to_container()
-
-            embed = hikari.Embed(title = f"Song Requested", description = f"{requested_song}\n\n**The requested song belongs to a playlist. Do you want to add the whole playlist as well?**", color = hikari.Color(0xc38ed5))\
+            
+            embed = hikari.Embed(title = f"Song Requested", description = f"{requested_song}\n\n**The requested song belongs to a playlist:**\n\
+                 {utilities.FLAVOR.get('secondary_option')} [{playlist_result.name}]({playlist_url}) ({get_total_length_of_tracks(playlist_result.tracks)}), {len(playlist_result.tracks)} songs total\n\
+                 \n**Do you want to add the whole playlist as well?**", color = hikari.Color(0xc38ed5))\
             .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-            .set_author(name = f"The followign song has been requested.", icon = plugin.app.get_me().avatar_url)
+            .set_author(name = f"The following song has been requested.", icon = plugin.app.get_me().avatar_url)
 
             initial_response = await ctx.respond(embed = embed, component = buttons)
 
-            playlist_selection = await respond_to_interaction(15, str(unique_id))
+            playlist_selection = await respond_to_interaction(15, str(unique_id), ctx.author.id)
             if playlist_selection == 1: # If "Yes" was selected
-                result = await lavalink.auto_search_tracks(playlist_url)
-                await lavalink.add_to_queue(ctx.guild_id, result.tracks, ctx.author.id)
+                await lavalink.add_to_queue(ctx.guild_id, playlist_result.tracks, ctx.author.id)
                 embed = hikari.Embed(title = f"Playlist added: ", \
-                                    description = f"<a:pinkheart:1012788247556018319> [{result.name}]({playlist_url}) ({get_total_length_of_tracks(result.tracks)}), {len(result.tracks)} songs total", \
+                                    description = f"{utilities.FLAVOR.get('primary_option')} [{playlist_result.name}]({playlist_url}) ({get_total_length_of_tracks(playlist_result.tracks)}), {len(playlist_result.tracks)} songs total", \
                                     color = hikari.Color(0xc38ed5)) \
                 .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
                 .set_author(name = f"Multiple songs have been added to the queue.", icon = plugin.app.get_me().avatar_url)
 
-                await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), content = "Playlist added!", embed = embed, component = None)
+                await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
                 return
             else: # If "No" was selected, or the interaction times out
                 result = await lavalink.auto_search_tracks(single_url)
@@ -182,14 +183,14 @@ async def play(ctx):
                 embed = hikari.Embed(title = f"Song requested", description = f"{requested_song}\n\n**The corresponding playlist was not added.**", color = hikari.Color(0xc38ed5))\
                 .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
                 .set_author(name = f"The following song has been added to the queue.", icon = plugin.app.get_me().avatar_url)
-                await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), content = "Playlist was not added.", embed = embed, component = None)
+                await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
                 return
     
         if isinstance(result, lavaplayer.PlayList):
             await lavalink.add_to_queue(ctx.guild_id, result.tracks, ctx.author.id)
 
             embed = hikari.Embed(title = f"Playlist added: ", \
-                                 description = f"<a:pinkheart:1012788247556018319> [{result.name}]({query}) ({get_total_length_of_tracks(result.tracks)}), {len(result.tracks)} songs total", \
+                                 description = f"{utilities.FLAVOR.get('primary_option')} [{result.name}]({query}) ({get_total_length_of_tracks(result.tracks)}), {len(result.tracks)} songs total", \
                                  color = hikari.Color(0xc38ed5)) \
             .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
             .set_author(name = f"Multiple songs have been added to the queue.", icon = plugin.app.get_me().avatar_url)
@@ -198,21 +199,22 @@ async def play(ctx):
         else:
             await lavalink.play(ctx.guild_id, result[0], ctx.author.id)
             embed = hikari.Embed(title = f"Song requested:", \
-                                 description = f"<a:pinkheart:1012788247556018319> [{result[0].title}]({result[0].uri}) ({convert_milliseconds(result[0].length)})", \
+                                 description = f"{utilities.FLAVOR.get('primary_option')} [{result[0].title}]({result[0].uri}) ({convert_milliseconds(result[0].length)})", \
                                  color = hikari.Color(0xc38ed5)) \
             .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
             .set_author(name = f"The following song has been added to the queue.", icon = plugin.app.get_me().avatar_url)
             await ctx.respond(embed = embed)
             return
 
-async def respond_to_interaction(time_out, unique_id):
+async def respond_to_interaction(time_out, unique_id, author):
     try:
-        event = await plugin.bot.wait_for(hikari.InteractionCreateEvent, time_out, (lambda event: event.interaction.type == 3 and event.interaction.custom_id.split("|")[2] == unique_id))
-    
+        event = await plugin.bot.wait_for(hikari.InteractionCreateEvent, time_out, (lambda event: event.interaction.user.id == author and event.interaction.type == 3 and event.interaction.custom_id.split("|")[2] == unique_id))
     except:
         return -1
 
     custom_id = event.interaction.custom_id.split("|")
+
+    await event.interaction.create_initial_response(response_type = 7)
     if(custom_id[0] == "qs"):
         return int(custom_id[1]) # Return 0, 1, 2, 3, or 4
 
@@ -231,14 +233,8 @@ async def pause(ctx):
         await ctx.respond("No song is playing!")
         return
     
-    global is_paused
-    if is_paused:
-        await ctx.respond("The song is already paused!")
-        return
-
     await lavalink.pause(ctx.guild_id, True)
     
-    is_paused = True
     await ctx.respond("Music paused!")
 
 @music.child
@@ -250,12 +246,6 @@ async def resume(ctx):
         await ctx.respond("There is no song to resume!")
         return
 
-    global is_paused
-    if not is_paused:
-        await ctx.respond("The song is already playing!")
-        return
-
-    is_paused = False
     await lavalink.pause(ctx.guild_id, False)
     await ctx.respond("Music resumed!")
 
@@ -328,21 +318,22 @@ async def queue(ctx):
         # String to be displayed in the queue for this song
         song_display = f"**[{i+1}]** [{queue[i].title}]({queue[i].uri}) ({convert_milliseconds(queue[i].length)})"
         if i == 0: # first song has a different emoji
-            song_display = "<a:pinkheart:1012788247556018319> " + song_display + "\n_(currently playing)_\n"
+            song_display = f"{utilities.FLAVOR.get('primary_option')} " + song_display + f" _requested by <@{queue[i].requester}>_" + "\n"
         else:
-            song_display = "<a:purpleheart:1012784670687100999>" + song_display + "\n"
+            song_display = f"{utilities.FLAVOR.get('secondary_option')} " + song_display + f" _requested by <@{queue[i].requester}>_" + "\n"
 
         display_queue.append(song_display)
     
-    unique_id = "lol" # 36 character unique identifier to receive unique interaction responses for this Queue
+    unique_id = str(uuid.uuid1()) # 36 character unique identifier to receive unique interaction responses for this Queue
+
     # method to assemble the current page
     def assemble_page(current_page):
         first_page_entry = current_page * 10
-        last_page_entry = (current_page * 10 + 9) if (current_page * 10 + 9) < queue_len else queue_len
+        last_page_entry = (current_page * 10 + 10) if (current_page * 10 + 10) < queue_len else queue_len
         page_display = "\n".join(display_queue[first_page_entry:last_page_entry])
 
         # create embed
-        embed = hikari.Embed(title = f"<a:kirbydance:1009554839602204712> Current Queue ({len(queue)} songs, {get_total_length_of_tracks(queue)} total length)", description = f"{page_display}", color = hikari.Color(0xc38ed5))\
+        embed = hikari.Embed(title = f"{utilities.FLAVOR.get('music')} Current Queue ({len(queue)} songs, {get_total_length_of_tracks(queue)} total length)", description = f"{page_display}", color = hikari.Color(0xc38ed5))\
         .set_footer(f"Page [{current_page + 1}/{num_pages}] | loop mode: {'ON' if node.repeat == True else 'OFF'} | loopqueue mode: {'ON' if node.queue_repeat == True else 'OFF'} | Thank you for using Aru.")
 
         # assemble Previous and Next Page Buttons
@@ -351,14 +342,14 @@ async def queue(ctx):
 
         buttons = plugin.app.rest.build_action_row() 
         if not (prev_button_to_page < 0): # check if index out of bounds. if yes, disable the button
-            buttons.add_button(2, f"page|{prev_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse("<:frogarrowleft:1013685036362502186>")).add_to_container()
+            buttons.add_button(2, f"page|{prev_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse(utilities.FLAVOR.get('left_arrow'))).add_to_container()
         else:
-            buttons.add_button(2, f"invalid|{prev_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse("<:frogarrowleft:1013685036362502186>")).set_is_disabled(True).add_to_container()
+            buttons.add_button(2, f"invalid|{prev_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse(utilities.FLAVOR.get('left_arrow'))).set_is_disabled(True).add_to_container()
         
         if not (next_button_to_page >= num_pages): # check if index out of bounds. if yes, disable the button
-            buttons.add_button(2, f"page|{next_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse("<:frogarrowright:1013683523317673994>")).add_to_container()
+            buttons.add_button(2, f"page|{next_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse(utilities.FLAVOR.get('left_arrow'))).add_to_container()
         else: 
-            buttons.add_button(2, f"invalid|{next_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse("<:frogarrowleft:1013685036362502186>")).set_is_disabled(True).add_to_container()
+            buttons.add_button(2, f"invalid|{next_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse(utilities.FLAVOR.get('right_arrow'))).set_is_disabled(True).add_to_container()
 
         return embed, buttons
     
@@ -366,21 +357,68 @@ async def queue(ctx):
     current_page = 0
     embed, buttons = assemble_page(current_page)
     response = await ctx.respond(embed=embed, component=buttons)
-    
-    while (new_page := (await respond_to_interaction(15, unique_id))) != -1:
+    while (new_page := (await respond_to_interaction(30, unique_id, ctx.author.id))) != -1:
         new_embed, new_buttons = assemble_page(new_page)
-        await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await response.message(), content = f"", embed = new_embed, component = new_buttons)
+        await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await response.message(), embed = new_embed, component = new_buttons)
 
 @music.child
-@lightbulb.option("position", "The queue position of the song you wish to remove.")
-@lightbulb.command("remove", "Remove a song from the queue.")
+@lightbulb.option("new_position", "The new queue position you want to move the song to. (1-based indexing)")
+@lightbulb.option("current_position", "The current queue position of the song you wish to move. (1-based indexing)")
+@lightbulb.command("move", "Move a song to a new position in the queue.")
 @lightbulb.implements(lightbulb.SlashSubCommand)
-async def remove(ctx):
+async def move(ctx):
+    position = int(ctx.options.current_position) - 1
+    new_position = int(ctx.options.new_position) - 1
     node = await lavalink.get_guild_node(ctx.guild_id)
+    queue = node.queue
     if not node or not node.queue:
         await ctx.respond("The queue is empty!")
         return
-    await ctx.respond("WIP lol")
+    if position < 1 or position > len(queue) - 1 or new_position < 1 or new_position > len(queue) - 1:
+        await ctx.respond(f"Error: Invalid position(s). Must be between `2-{len(node.queue)}`")
+        return
+
+    song = queue[position]
+
+    await lavalink.remove(ctx.guild_id, position)
+    queue = node.queue
+    queue.insert(new_position, song)
+    node.queue = queue
+
+    song_display = f"**[{position+1}->{new_position+1}]** [{queue[new_position].title}]({queue[new_position].uri}) ({convert_milliseconds(queue[new_position].length)})"
+    string = utilities.FLAVOR.get('secondary_option') + song_display + f" _requested by <@{queue[position].requester}>_" + "\n"
+
+    embed = hikari.Embed(title = f"Song moved", description = string, color = hikari.Color(0xc38ed5))\
+                .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
+                .set_author(name = f"The following song has been moved to a new position in the queue.", icon = plugin.app.get_me().avatar_url)
+    
+    await ctx.respond(embed = embed)
+
+@music.child
+@lightbulb.option("position", "The queue position of the song you wish to remove. (1-based indexing)")
+@lightbulb.command("remove", "Remove a song from the queue.")
+@lightbulb.implements(lightbulb.SlashSubCommand)
+async def remove(ctx):
+    position = int(ctx.options.position) - 1
+    node = await lavalink.get_guild_node(ctx.guild_id)
+    queue = node.queue
+    if not node or not node.queue:
+        await ctx.respond("The queue is empty!")
+        return
+    if position < 0 or position > len(queue) - 1:
+        await ctx.respond(f"Error: Invalid position. Must be between `1-{len(node.queue)}`")
+        return
+
+    song = queue[position]
+    song_display = f"**[{position+1}]** [{song.title}]({song.uri}) ({convert_milliseconds(song.length)})"
+    string = utilities.FLAVOR.get('secondary_option') + song_display + f" _requested by <@{song.requester}>_" + "\n"
+
+    embed = hikari.Embed(title = f"Song removed", description = string, color = hikari.Color(0xc38ed5))\
+                .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
+                .set_author(name = f"The following song has been removed from the queue.", icon = plugin.app.get_me().avatar_url)
+    
+    await lavalink.remove(ctx.guild_id, position)
+    await ctx.respond(embed = embed)
 
 @music.child
 @lightbulb.command("np", "Check what song is currently playing.")

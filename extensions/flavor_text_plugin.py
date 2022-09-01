@@ -2,9 +2,9 @@ import hikari
 import hikari.api.rest
 import lightbulb
 import datetime
+import utilities
 
 plugin = lightbulb.Plugin('flavor_text_plugin')
-flavorTextChannel = 1014275372856123424
 
 # When a message is sent, print it
 @plugin.listener(hikari.GuildMessageCreateEvent)
@@ -21,7 +21,12 @@ async def message_listener(event):
 
     if len(event.message.embeds) != 0:
         print("sent an embed")
-    
+
+@plugin.listener(lightbulb.events.CommandInvocationEvent)
+async def command_listener(event):
+    current_time = datetime.datetime.now().strftime("%m/%d/%y, %H:%M:%S")
+    print(str(current_time) + f" [{event.context.get_guild().name}, #{str(event.context.get_channel())}] " + str(event.context.author) + f" used command '{event.command.name}'")
+
 # When the bot is started, send a greeting
 @plugin.listener(hikari.StartedEvent)
 async def start_bot(event):
@@ -37,14 +42,14 @@ async def start_bot(event):
     else: # Afternoon
         greeting_text = "Good afternoon!"
 
-    text = f"{greeting_text} It is now `{current_time.hour}:{current_time.minute}`. <a:kirbywink:1011481550577213450> (Aru is now online.)"
-    await plugin.app.rest.create_message(channel = flavorTextChannel, content = text)
+    text = f"{greeting_text} It is now `{current_time.hour}:{current_time.minute}`. {utilities.FLAVOR.get('wink')} (Aru is now online.)"
+    await plugin.app.rest.create_message(channel = utilities.FLAVOR_TEXT_CHANNEL, content = text)
 
 # When the bot is stopped, send a farewell
 @plugin.listener(hikari.StoppingEvent)
 async def start_bot(event):
-    text = f"_Getting... sleepy..._ <:kirbysleeby:1009554855293096048> (Aru is now offline.)"
-    await plugin.app.rest.create_message(channel = flavorTextChannel, content = text)
+    text = f"_Getting... sleepy..._ {utilities.FLAVOR.get('sleepy')} (Aru is now offline.)"
+    await plugin.app.rest.create_message(channel = utilities.FLAVOR_TEXT_CHANNEL, content = text)
 
 def load(bot):
     bot.add_plugin(plugin)
