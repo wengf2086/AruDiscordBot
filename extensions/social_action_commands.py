@@ -6,6 +6,7 @@ import datetime
 import os.path
 import requests
 
+import sql_functions
 from sql_functions import Gif
 import utilities
 
@@ -73,9 +74,6 @@ async def add_gif(ctx):
         response += f"\n\nThe following URL(s) have already been added to the database by another user:\n{already_added_links_string}\nGood taste! <a:kirbywink:1011481550577213450>"
     if len(broken_gif_links) > 0:
         response += f"\n\nThe following URL(s) could not be added:\n{broken_gif_links_string}\nPlease check to make sure the URLs are valid and try again! <a:kirbydeeono:1011803865164816384>"  
-
-    if response == "":
-        await ctx.respond("A strange error occurred... Please contact the developer.")
 
     await ctx.respond(response)
 

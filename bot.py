@@ -21,5 +21,3 @@ if __name__ == "__main__":
 
     bot.load_extensions_from('./extensions') # Load all extensions
     bot.run(activity = hikari.Activity(name = random_activity[0], type = random_activity[1])) # Run the bot!
-
-    

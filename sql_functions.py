@@ -1,21 +1,18 @@
 import sqlite3
-import datetime
+from datetime import datetime
+from ssl import create_default_context
 from venv import create
 
-# Connection Object that represents our database. Can pass in a file or have an in-memory database with "_:memory:_"
-# Creates a file or connects to it if it already exists
-# conn = sqlite3.connect('.\sqlite\bot.db')
-
-# Cursor that allows us to execute SQL commands
-# c = conn.cursor()
+db_dir = './bot.db'
 
 class Gif():
     @staticmethod
     def add_gif(action_name = str, author_id = int, gif_link = str, date = None):
-        '''Adds a gif link to the database.'''
+        '''
+        Adds a gif link to the database.
+        date_added format: ("%m/%d/%y, %H:%M:%S")'''
         if date == None:
             date = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            conn = sqlite3.connect(db_dir)
         insert_gif(action_name, date, author_id, gif_link)
 
     @staticmethod
@@ -64,19 +61,7 @@ class Gif():
         '''Enables/Disables this gif in the database.'''
         disable_gif(self.link)
 
-# Should only be called once
-# Creates the GIFS table:
-# col 0: action_name
-# col 1: date_added, datetime.datetime.now().strftime("%m/%d/%y, %H:%M:%S")
-# col 2: author_id
-# col 3: link
-# col 4: appearances
-# col 5: likes
-# col 6: dislikes
-# col 7: reports
-# col 8: is_disabled
-db_dir = './bot.db'
-
+# GIF Database Functiions
 def create_gifs_table():
     conn = sqlite3.connect(db_dir)
     c = conn.cursor()
@@ -101,6 +86,7 @@ def delete_gifs_table():
         c.execute("""DROP TABLE gifs""") 
 
 def insert_gif(action_name, date, author_id, gif_link):
+    '''date_added format: ("%m/%d/%y, %H:%M:%S")'''
     conn = sqlite3.connect(db_dir)
     c = conn.cursor()
     with conn:
@@ -169,3 +155,70 @@ def print_all_gifs():
     for row in c.fetchall():
         print(row)
     conn.close()
+
+# Feedback Log Database Functions
+def create_feedback_log_table():
+    conn = sqlite3.connect(db_dir)
+    c = conn.cursor()
+    with conn:
+        c.execute("""CREATE TABLE feedback_log(
+                    feedback_type text NOT NULL,
+                    date_added text NOT NULL,
+                    author_id integer NOT NULL,
+                    info text NOT NULL
+                    )""") # info: Either feedback or gif_link
+
+def add_feedback(feedback_type = str, date = str, author_id = int, info = str):
+    '''
+    feedback_type: 'upvote', 'downvote', 'report', 'disable', 'comment'.
+    date format: ("%m/%d/%y, %H:%M:%S")
+    info: gif link or comment'''
+    if feedback_type != None and feedback_type not in ['upvote', 'downvote', 'report', 'disable', 'comment']:
+        raise Exception(f"Invalid feedback_type '{feedback_type}'. Must be 'upvote', 'downvote', 'report', 'disable', or 'comment'.")
+    
+    conn = sqlite3.connect(db_dir)
+    c = conn.cursor()
+    with conn:
+        c.execute("""INSERT INTO feedback_log(feedback_type, date_added, author_id, info) 
+        VALUES (:feedback_type, :date, :author_id, :info)
+        """, {'feedback_type': feedback_type, 'date': date, 'author_id': author_id, 'info': info})
+
+def fetch_todays_feedback(feedback_type = None, author_id = None):
+    today = datetime.strftime(datetime.now(), "%m/%d/%y")
+    fetch_feedback(feedback_type = feedback_type, date = today, author_id = author_id)
+
+def fetch_feedback(feedback_type = None, date = None, author_id = None):
+    '''Returns feedback based on specified parameters, or all feedback if no parameters are specified.
+    date format: ("%m/%d/%y")'''
+    if feedback_type != None and feedback_type not in ['upvote', 'downvote', 'report', 'disable', 'comment']:
+        raise Exception(f"Invalid feedback_type '{feedback_type}'. Must be 'upvote', 'downvote', 'report', 'disable', or 'comment'.")
+    if date != None:
+        try:
+            date_added = datetime.strptime(date, "%m/%d/%y").strftime("%m/%d/%y")
+        except:
+            return Exception(f"Invalid date format. Must be \"%m/%d/%y\"")
+
+    conn = sqlite3.connect(db_dir)
+    c = conn.cursor()
+    if author_id == None and feedback_type == None:
+        c.execute("SELECT * FROM feedback_log")
+    
+    elif author_id != None and feedback_type != None: # If both author_id and feedback_type requested
+        c.execute("SELECT * FROM feedback_log WHERE feedback_type=:feedback_type AND author_id=:author_id", {'feedback_type':feedback_type, 'author_id':author_id})
+
+    elif feedback_type != None: # If author_id not requested
+        c.execute("SELECT * FROM feedback_log WHERE feedback_type=:feedback_type", {'feedback_type':feedback_type})
+    
+    elif author_id != None: # IF feedback_type not requested
+        c.execute("SELECT * FROM feedback_log WHERE author_id=:author_id", {'author_id':author_id})
+    
+    all_feedback = c.fetchall() # Returns None if none found
+
+    feedback_from_date = []
+    if date != None:
+        for feedback in all_feedback:
+            if datetime.strptime(feedback[1], "%m/%d/%Y, %H:%M:%S").strftime("%m/%d/%y") == date_added:
+                feedback_from_date.append(feedback)
+        return feedback_from_date
+    else:
+        return all_feedback

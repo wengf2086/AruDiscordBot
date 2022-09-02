@@ -86,6 +86,7 @@ async def join(ctx):
 @lightbulb.command("play", "Play a song or playlist!", aliases=["p"], auto_defer = True)
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def play(ctx):
+    node = await lavalink.get_guild_node(ctx.guild_id)
     # If the bot is not in a voice channel, attempt to join one
     states = plugin.app.cache.get_voice_states_view_for_guild(ctx.guild_id)
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == plugin.app.get_me().id)]
@@ -142,7 +143,7 @@ async def play(ctx):
                                  description = f"{utilities.FLAVOR.get('primary_option')} {number_emojis.get(query_selection+1)} [{result[query_selection].title}]({result[query_selection].uri}) ({convert_milliseconds(result[query_selection].length)})", \
                                  color = hikari.Color(0xc38ed5)) \
             .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-            .set_author(name = f"The following song has been added to the queue.", icon = plugin.app.get_me().avatar_url)
+            .set_author(name = f"The following song has been added to the queue at position {len(node.queue)}.", icon = plugin.app.get_me().avatar_url)
             await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
         return
 
@@ -182,7 +183,7 @@ async def play(ctx):
                 await lavalink.play(ctx.guild_id, result[0], ctx.author.id)
                 embed = hikari.Embed(title = f"Song requested", description = f"{requested_song}\n\n**The corresponding playlist was not added.**", color = hikari.Color(0xc38ed5))\
                 .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-                .set_author(name = f"The following song has been added to the queue.", icon = plugin.app.get_me().avatar_url)
+                .set_author(name = f"The following song has been added to the queue at position {len(node.queue)}.", icon = plugin.app.get_me().avatar_url)
                 await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
                 return
     
@@ -230,9 +231,12 @@ async def respond_to_interaction(time_out, unique_id, author):
 async def pause(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
-        await ctx.respond("No song is playing!")
+        await ctx.respond("No song is playing!", flags = hikari.MessageFlag.EPHEMERAL)
         return
-    
+
+    if node.is_pause:
+        await ctx.respond("The player is already paused!", flags = hikari.MessageFlag.EPHEMERAL)
+
     await lavalink.pause(ctx.guild_id, True)
     
     await ctx.respond("Music paused!")
@@ -243,8 +247,11 @@ async def pause(ctx):
 async def resume(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
-        await ctx.respond("There is no song to resume!")
+        await ctx.respond("There is no song to resume!", flags = hikari.MessageFlag.EPHEMERAL)
         return
+
+    if not node.is_pause:
+        await ctx.respond("The player is already playing!", flags = hikari.MessageFlag.EPHEMERAL)
 
     await lavalink.pause(ctx.guild_id, False)
     await ctx.respond("Music resumed!")
