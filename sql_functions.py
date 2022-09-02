@@ -104,6 +104,7 @@ def get_specific_gif(gif_link):
     conn = sqlite3.connect(db_dir)
     c = conn.cursor()
     c.execute("SELECT * FROM gifs WHERE link=:gif_link", {'gif_link':gif_link})
+    
     return c.fetchone() # Returns None if none found
 
 def gif_appearance(gif_link):
@@ -168,11 +169,15 @@ def create_feedback_log_table():
                     info text NOT NULL
                     )""") # info: Either feedback or gif_link
 
-def add_feedback(feedback_type = str, date = str, author_id = int, info = str):
+def add_feedback(feedback_type = str, date = None, author_id = int, info = str):
     '''
     feedback_type: 'upvote', 'downvote', 'report', 'disable', 'comment'.
     date format: ("%m/%d/%y, %H:%M:%S")
     info: gif link or comment'''
+
+    if date == None:
+        date = datetime.strftime(datetime.now(), "%m/%d/%y, %H:%M:%S")
+
     if feedback_type != None and feedback_type not in ['upvote', 'downvote', 'report', 'disable', 'comment']:
         raise Exception(f"Invalid feedback_type '{feedback_type}'. Must be 'upvote', 'downvote', 'report', 'disable', or 'comment'.")
     
@@ -185,7 +190,7 @@ def add_feedback(feedback_type = str, date = str, author_id = int, info = str):
 
 def fetch_todays_feedback(feedback_type = None, author_id = None):
     today = datetime.strftime(datetime.now(), "%m/%d/%y")
-    fetch_feedback(feedback_type = feedback_type, date = today, author_id = author_id)
+    return fetch_feedback(feedback_type = feedback_type, date = today, author_id = author_id)
 
 def fetch_feedback(feedback_type = None, date = None, author_id = None):
     '''Returns feedback based on specified parameters, or all feedback if no parameters are specified.
@@ -217,7 +222,7 @@ def fetch_feedback(feedback_type = None, date = None, author_id = None):
     feedback_from_date = []
     if date != None:
         for feedback in all_feedback:
-            if datetime.strptime(feedback[1], "%m/%d/%Y, %H:%M:%S").strftime("%m/%d/%y") == date_added:
+            if datetime.strptime(feedback[1], "%m/%d/%y, %H:%M:%S").strftime("%m/%d/%y") == date_added:
                 feedback_from_date.append(feedback)
         return feedback_from_date
     else:

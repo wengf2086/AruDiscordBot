@@ -5,6 +5,7 @@ import random
 import datetime
 import os.path
 import requests
+import uuid
 
 import sql_functions
 from sql_functions import Gif
@@ -99,13 +100,82 @@ async def action(ctx):
 
     author = await plugin.app.rest.fetch_user(gif.author_id)
     msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = action_string, embed = embed, user_mentions=True)
+    gif.incr_appearance() # Increment appearance attribute of the GIF in the database
 
-    # button = plugin.app.rest.build_action_row().add_button(2, f"report|{msg.id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
-    await ctx.respond(f"This GIF was added by {author.mention} at `{gif.date_added}`.", flags = hikari.MessageFlag.EPHEMERAL)
-    # await respond_to_interaction(20)
+    gif_info = f"This GIF was added by {author.mention} at `{gif.date_added}`."
 
-    if recipient.id == 1009180210823970956:
+    feedback = sql_functions.fetch_todays_feedback(author_id = ctx.author.id) # Get all the feedback sent by the author today
+    if ctx.author.id != 173555466176036864 and feedback and len(feedback) >= utilities.DAILY_FEEDBACK_LIMIT: # Daily Interaction Limit Reached, do not allow further feedback.
+        await ctx.respond(content = f"{gif_info}\n(*You have reached your maximum feedback limit today. Thanks for your input!*)", flags = hikari.MessageFlag.EPHEMERAL)
+        return
+
+    unique_id = str(uuid.uuid1()) # 36 character unique identifier to receive unique interaction responses for this Queue
+    buttons = plugin.app.rest.build_action_row()
+    buttons.add_button(2, f"upvote|{unique_id}").set_emoji(hikari.Emoji.parse("👍")).add_to_container()
+    buttons.add_button(2, f"downvote|{unique_id}").set_emoji(hikari.Emoji.parse("👎")).add_to_container()
+    buttons.add_button(2, f"report|{unique_id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
+
+    await ctx.respond(content = gif_info, component = buttons, flags = hikari.MessageFlag.EPHEMERAL)
+
+    if recipient.id == 1009180210823970956: # a quirky response if an action is done to Aru.
         await ctx.respond(attachment = 'action_response.png')
+
+    while (event := (await response_to_interaction(30))) != -1:
+        if event.interaction.custom_id.split("|")[0] == "upvote":
+            sql_functions.add_feedback(feedback_type = "upvote", author_id = ctx.author.id, info = gif.link)
+            gif.incr_likes()
+
+            buttons = plugin.app.rest.build_action_row()
+            buttons.add_button(3, f"complete|{unique_id}").set_emoji(hikari.Emoji.parse("👍")).add_to_container()
+            buttons.add_button(2, f"downvote|{unique_id}").set_emoji(hikari.Emoji.parse("👎")).set_is_disabled(True).add_to_container()
+            buttons.add_button(2, f"report|{unique_id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").set_is_disabled(True).add_to_container()
+            await event.interaction.create_initial_response(response_type = 7)
+            await ctx.interaction.edit_initial_response(content = f"{gif_info}\nYou upvoted this GIF!", embed = None, component = buttons)
+
+        elif event.interaction.custom_id.split("|")[0] == "downvote":
+            sql_functions.add_feedback(feedback_type = "downvote", author_id = ctx.author.id, info = gif.link)
+            gif.incr_dislikes()
+
+            buttons = plugin.app.rest.build_action_row()
+            buttons.add_button(2, f"upvote|{unique_id}").set_emoji(hikari.Emoji.parse("👍")).set_is_disabled(True).add_to_container()
+            buttons.add_button(4, f"complete|{unique_id}").set_emoji(hikari.Emoji.parse("👎")).add_to_container()
+            buttons.add_button(2, f"report|{unique_id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
+            await event.interaction.create_initial_response(response_type = 7)
+            await ctx.interaction.edit_initial_response(content = f"{gif_info}\nYou downvoted this GIF!", embed = None, component = buttons)
+
+        elif event.interaction.custom_id.split("|")[0] == "report":
+            embed_description = "Reporting a GIF will delete the message and mark the GIF for review.\nIf the GIF is deemed inappropriate after review, it will be removed.\n\nIf you're sure you'd like to report this GIF, select the reason below, or go back."
+            embed = hikari.Embed(color = hikari.Color(0xc38ed5), title = "Are you sure you want to report this GIF?", description = embed_description)\
+                .set_thumbnail(msg.embeds[0].image)\
+                .set_footer("Warning: Abusing the 'Report' feature will result in a blacklist. Also, I will be very sad. :(")
+            select_menu = plugin.app.rest.build_action_row().add_select_menu(f"report_reason|{unique_id}")\
+                .add_option("GIF is NSFW", "NSFW").set_emoji(hikari.Emoji.parse("🔞")).set_description("The GIF is overly sexual or inappropriate.").add_to_menu()\
+                .add_option("GIF is in the wrong category", "Wrong_Category").set_emoji(hikari.Emoji.parse("❌")).set_description("The GIF is not of the correct action.").add_to_menu()\
+                .add_option("GIF is not loading", "Broken").set_emoji(hikari.Emoji.parse("🛠️")).set_description("The GIF is not loading properly.").add_to_menu()\
+                .add_option("Cancel", "Nevermind").set_emoji(hikari.Emoji.parse("⬅️")).set_description("Go back to the previous menu.").add_to_menu()\
+                .add_to_container()
+
+            await event.interaction.create_initial_response(response_type = 7)
+            await ctx.interaction.edit_initial_response(embed = embed, component = select_menu)
+
+        elif event.interaction.custom_id.split("|")[0] == "report_reason":
+            if event.interaction.values[0] == "Nevermind":
+                buttons = plugin.app.rest.build_action_row()
+                buttons.add_button(2, f"upvote|{unique_id}").set_emoji(hikari.Emoji.parse("👍")).add_to_container()
+                buttons.add_button(2, f"downvote|{unique_id}").set_emoji(hikari.Emoji.parse("👎")).add_to_container()
+                buttons.add_button(2, f"report|{unique_id}").set_emoji(hikari.Emoji.parse("⚠️")).set_label("Report this GIF").add_to_container()
+                await event.interaction.create_initial_response(response_type = 7)
+                await ctx.interaction.edit_initial_response(content = gif_info, embed = None, component = buttons)
+
+            else:
+                sql_functions.add_feedback(feedback_type = "report", author_id = ctx.author.id, info = gif.link)
+                gif.incr_reports()
+
+                content = f"You reported this GIF for the following reason: `{event.interaction.values[0]}`\nYour feedback has been recorded and will be reviewed. Thank you for your input."
+
+                await event.interaction.create_initial_response(response_type = 7)
+                await ctx.interaction.edit_initial_response(content = content, embed = None, component = None)
+                await plugin.app.rest.delete_message(channel = ctx.channel_id, message = msg)
 
 @add_gif.autocomplete("action_name")
 @action.autocomplete("action_name")
@@ -116,34 +186,13 @@ async def action_autocomplete(opt: hikari.AutocompleteInteractionOption, inter: 
             matching.append(action)
     return matching
  
-async def respond_to_interaction(timeout):
+async def response_to_interaction(timeout = int):
+    '''Returns interaction response event, or -1 if interaction times out.'''
     try:
         event = await plugin.bot.wait_for(hikari.InteractionCreateEvent, timeout = timeout)
+        return event
     except:
-        print("Interaction Time-Out. Perfectly Normal :)")
-        return
-
-    if event.interaction.type == 3: # if interaction is of type MESSAGE_COMPONENT
-         custom_id = event.interaction.custom_id.split("|")
-         if(custom_id[0] == "report"):
-            msg = await plugin.app.rest.fetch_message(channel = event.interaction.channel_id, message = custom_id[1])
-
-            embed_description = "Reporting a GIF will mark it for review. \nIf the GIF is deemed inappropriate after review, it will be removed.\nIf you're sure you'd like to report this GIF, select the reason below."
-            embed = hikari.Embed(color = hikari.Color(0xc38ed5), title = "Report a GIF",description = embed_description).set_thumbnail(msg.embeds[0].image).set_footer("Warning: Abusing the 'Report' feature will result in a blacklist. Also, I will be very sad. :(")
-            select_menu = plugin.app.rest.build_action_row().add_select_menu(f"report_reason|{msg.embeds[0].image}")\
-                .add_option("GIF is NSFW", "NSFW").set_emoji(hikari.Emoji.parse("🔞")).set_description("The GIF is overly sexual or inappropriate.").add_to_menu()\
-                .add_option("GIF is in the wrong category", "Wrong_Category").set_emoji(hikari.Emoji.parse("❌")).set_description("The GIF is not of the correct action.").add_to_menu()\
-                .add_option("GIF is not loading", "Broken").set_emoji(hikari.Emoji.parse("🛠️")).set_description("The GIF is not loading properly.").add_to_menu()\
-                .add_to_container()
-            await event.interaction.create_initial_response(response_type = 4, content = "Are you sure you want to report this GIF?", flags = hikari.MessageFlag.EPHEMERAL, component = select_menu, embed = embed)
-            await respond_to_interaction(20)
-        
-         elif(custom_id[0] == "report_reason"):
-            f = open(utilities.LOG_FILE_NAME, 'a')
-            new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(event.interaction.user.id) + '|' + event.interaction.values[0] + '|' + custom_id[1] + '\n'
-            f.write(new_line)
-            f.close()
-            await event.interaction.create_initial_response(response_type = 4, content = "Your response has been recorded and will be reviewed. Thank you for your input.", flags = hikari.MessageFlag.EPHEMERAL)
+        return -1
 
 def load(bot):
     bot.add_plugin(plugin)
