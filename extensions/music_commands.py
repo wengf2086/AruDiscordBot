@@ -143,7 +143,7 @@ async def play(ctx):
                                  description = f"{utilities.FLAVOR.get('primary_option')} {number_emojis.get(query_selection+1)} [{result[query_selection].title}]({result[query_selection].uri}) ({convert_milliseconds(result[query_selection].length)})", \
                                  color = hikari.Color(0xc38ed5)) \
             .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-            .set_author(name = f"The following song has been added to the queue at position {len(node.queue)}.", icon = plugin.app.get_me().avatar_url)
+            .set_author(name = f"The following song has been added to the queue at position {len(node.queue) if node else 1}.", icon = plugin.app.get_me().avatar_url)
             await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
         return
 
