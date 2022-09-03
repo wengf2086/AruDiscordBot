@@ -171,14 +171,14 @@ def create_feedback_log_table():
 
 def add_feedback(feedback_type = str, date = None, author_id = int, info = str):
     '''
-    feedback_type: 'upvote', 'downvote', 'report', 'disable', 'comment'.
+    feedback_type: 'upvote', 'downvote', 'report', 'disable', 'comment', 'nsfw', 'wrong_cat', 'broken'.
     date format: ("%m/%d/%y, %H:%M:%S")
     info: gif link or comment'''
 
     if date == None:
         date = datetime.strftime(datetime.now(), "%m/%d/%y, %H:%M:%S")
 
-    if feedback_type != None and feedback_type not in ['upvote', 'downvote', 'report', 'disable', 'comment']:
+    if feedback_type != None and feedback_type not in ['upvote', 'downvote',  'disable', 'comment', 'nsfw', 'wrong_cat', 'broken']:
         raise Exception(f"Invalid feedback_type '{feedback_type}'. Must be 'upvote', 'downvote', 'report', 'disable', or 'comment'.")
     
     conn = sqlite3.connect(db_dir)
@@ -195,8 +195,8 @@ def fetch_todays_feedback(feedback_type = None, author_id = None):
 def fetch_feedback(feedback_type = None, date = None, author_id = None):
     '''Returns feedback based on specified parameters, or all feedback if no parameters are specified.
     date format: ("%m/%d/%y")'''
-    if feedback_type != None and feedback_type not in ['upvote', 'downvote', 'report', 'disable', 'comment']:
-        raise Exception(f"Invalid feedback_type '{feedback_type}'. Must be 'upvote', 'downvote', 'report', 'disable', or 'comment'.")
+    if feedback_type != None and feedback_type not in ['upvote', 'downvote', 'disable', 'comment', 'nsfw', 'wrong_cat', 'broken']:
+        raise Exception(f"Invalid feedback_type '{feedback_type}'. Must be 'upvote', 'downvote', 'disable', 'comment', 'nsfw', 'wrong_cat', 'broken'.")
     if date != None:
         try:
             date_added = datetime.strptime(date, "%m/%d/%y").strftime("%m/%d/%y")
@@ -227,3 +227,5 @@ def fetch_feedback(feedback_type = None, date = None, author_id = None):
         return feedback_from_date
     else:
         return all_feedback
+
+print(fetch_todays_feedback(feedback_type = "broken"))

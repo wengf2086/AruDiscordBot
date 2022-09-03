@@ -1,9 +1,6 @@
 from asyncio.windows_events import NULL
 import hikari
 import lightbulb
-import random
-import datetime
-import os.path
 import requests
 import uuid
 
@@ -99,7 +96,7 @@ async def action(ctx):
     embed = hikari.Embed(color = hikari.Color(0xc38ed5)).set_image(gif.link)
 
     author = await plugin.app.rest.fetch_user(gif.author_id)
-    msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = action_string, embed = embed, user_mentions=True)
+    msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = action_string, embed = embed, user_mentions=True) # Sends the GIF
     gif.incr_appearance() # Increment appearance attribute of the GIF in the database
 
     gif_info = f"This GIF was added by {author.mention} at `{gif.date_added}`."
@@ -120,7 +117,7 @@ async def action(ctx):
     if recipient.id == 1009180210823970956: # a quirky response if an action is done to Aru.
         await ctx.respond(attachment = 'action_response.png')
 
-    while (event := (await response_to_interaction(30))) != -1:
+    while (event := (await response_to_interaction(30, unique_id))) != -1:
         if event.interaction.custom_id.split("|")[0] == "upvote":
             sql_functions.add_feedback(feedback_type = "upvote", author_id = ctx.author.id, info = gif.link)
             gif.incr_likes()
@@ -149,9 +146,9 @@ async def action(ctx):
                 .set_thumbnail(msg.embeds[0].image)\
                 .set_footer("Warning: Abusing the 'Report' feature will result in a blacklist. Also, I will be very sad. :(")
             select_menu = plugin.app.rest.build_action_row().add_select_menu(f"report_reason|{unique_id}")\
-                .add_option("GIF is NSFW", "NSFW").set_emoji(hikari.Emoji.parse("🔞")).set_description("The GIF is overly sexual or inappropriate.").add_to_menu()\
-                .add_option("GIF is in the wrong category", "Wrong_Category").set_emoji(hikari.Emoji.parse("❌")).set_description("The GIF is not of the correct action.").add_to_menu()\
-                .add_option("GIF is not loading", "Broken").set_emoji(hikari.Emoji.parse("🛠️")).set_description("The GIF is not loading properly.").add_to_menu()\
+                .add_option("GIF is NSFW", "nsfw").set_emoji(hikari.Emoji.parse("🔞")).set_description("The GIF is overly sexual or inappropriate.").add_to_menu()\
+                .add_option("GIF is in the wrong category", "wrong_cat").set_emoji(hikari.Emoji.parse("❌")).set_description("The GIF is not of the correct action.").add_to_menu()\
+                .add_option("GIF is not loading", "broken").set_emoji(hikari.Emoji.parse("🛠️")).set_description("The GIF is not loading properly.").add_to_menu()\
                 .add_option("Cancel", "Nevermind").set_emoji(hikari.Emoji.parse("⬅️")).set_description("Go back to the previous menu.").add_to_menu()\
                 .add_to_container()
 
@@ -168,10 +165,9 @@ async def action(ctx):
                 await ctx.interaction.edit_initial_response(content = gif_info, embed = None, component = buttons)
 
             else:
-                sql_functions.add_feedback(feedback_type = "report", author_id = ctx.author.id, info = gif.link)
+                sql_functions.add_feedback(feedback_type = event.interaction.values[0], author_id = ctx.author.id, info = gif.link)
                 gif.incr_reports()
-
-                content = f"You reported this GIF for the following reason: `{event.interaction.values[0]}`\nYour feedback has been recorded and will be reviewed. Thank you for your input."
+                content = f"You reported this GIF for the following reason: `{event.interaction.values[0].upper()}`\nYour feedback has been recorded and will be reviewed. Thank you for your input."
 
                 await event.interaction.create_initial_response(response_type = 7)
                 await ctx.interaction.edit_initial_response(content = content, embed = None, component = None)
@@ -186,10 +182,31 @@ async def action_autocomplete(opt: hikari.AutocompleteInteractionOption, inter: 
             matching.append(action)
     return matching
  
-async def response_to_interaction(timeout = int):
+@plugin.command 
+@lightbulb.add_checks(lightbulb.has_role_permissions(hikari.Permissions.ADMINISTRATOR))
+@lightbulb.option('gif_link', "Enter the gif link you wish to disable.", autocomplete=True)
+@lightbulb.command('disable_gif', '[ADMIN ONLY] Disable an action GIF for the /action command.')
+@lightbulb.implements(lightbulb.SlashCommand)
+async def disable_gif(ctx):
+    link = ctx.options.gif_link
+    if not link.endswith(".gif"): # if link doesn't end with '.gif', attempt to extract gif from URL
+        link = extract_gif_link_from_url(link)
+    gif = Gif.get_gif_from_link(link)
+    if gif:
+        gif.disable()
+        if gif.is_disabled:
+            embed = hikari.Embed(title = "Disabled the GIF:", description = link, color = hikari.Color(0xc38ed5)).set_image(link)
+            ctx.respond(embed)
+        else:
+           embed = hikari.Embed(title = "Enabled the GIF:", description = link, color = hikari.Color(0xc38ed5)).set_image(link)
+           ctx.respond(embed)
+    else:
+        ctx.respond("Error: GIF not found.")
+
+async def response_to_interaction(timeout, unique_id):
     '''Returns interaction response event, or -1 if interaction times out.'''
     try:
-        event = await plugin.bot.wait_for(hikari.InteractionCreateEvent, timeout = timeout)
+        event = await plugin.bot.wait_for(hikari.InteractionCreateEvent, timeout, (lambda event: event.interaction.type == 3 and event.interaction.custom_id.split("|")[1] == unique_id))
         return event
     except:
         return -1
