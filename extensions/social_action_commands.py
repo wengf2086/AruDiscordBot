@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 import hikari
 import lightbulb
 import requests

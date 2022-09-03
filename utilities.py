@@ -2,15 +2,15 @@ import os.path
 from os import listdir
 import random
 import requests
-import datetime
 import os.path
 
 from sql_functions import Gif
 
 import lavaplayer
+
 # Constants
 SERVERS = 1004231179169443900, 133384813489946624, 700518641413652580, 1014274983721193563, 752188244392935487
-TOKEN = 'MTAwOTE4MDIxMDgyMzk3MDk1Ng.GRN0pl.Ke7DCQsSwFLLFiBfd59ittHtJH01HWOMLlQ3ew'
+TOKEN = 'MTAwOTE4MDIxMDgyMzk3MDk1Ng.Ga4PFt.B26RGd-WEhIFJZPPsknjtEmG5ejg1L2agkNb9w'
 PREFIX = "a!"
 LOG_FILE_NAME = "log.txt"
 DAILY_FEEDBACK_LIMIT = 10
