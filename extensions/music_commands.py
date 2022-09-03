@@ -53,12 +53,6 @@ def get_total_length_of_tracks(tracklist):
     return convert_milliseconds(sum_in_milliseconds)
 
 # Commands
-@plugin.command 
-@lightbulb.command('music', 'Play music!')
-@lightbulb.implements(lightbulb.SlashCommandGroup)
-async def music(ctx):
-    pass
-
 async def try_join(ctx, states):
     if not states:
         return 0
@@ -70,9 +64,9 @@ async def try_join(ctx, states):
     await lavalink.wait_for_connection(ctx.guild_id)
     return channel_id
 
-@music.child
-@lightbulb.command("join", "Join your voice channel.")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("join", "<a:kirbeats:1014664329666248815> Join your voice channel.")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def join(ctx):
     states = plugin.app.cache.get_voice_states_view_for_guild(ctx.guild_id)
     channel_id = await try_join(ctx, states)
@@ -81,10 +75,10 @@ async def join(ctx):
         return
     await ctx.respond(f"Joined <#{channel_id}>!")
 
-@music.child
+@plugin.command
 @lightbulb.option("query", "Search for a song or input a YouTube link!")
-@lightbulb.command("play", "Play a song or playlist!", aliases=["p"], auto_defer = True)
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@lightbulb.command("play", "<a:kirbeats:1014664329666248815> Play a song or playlist!", aliases=["p"], auto_defer = True)
+@lightbulb.implements(lightbulb.SlashCommand)
 async def play(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     # If the bot is not in a voice channel, attempt to join one
@@ -225,9 +219,9 @@ async def respond_to_interaction(time_out, unique_id, author):
     elif(custom_id[0] == "page"):
         return int(custom_id[1]) # Return page number corresponding to button
 
-@music.child
-@lightbulb.command("pause", "Pause the current song!")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("pause", "<a:kirbeats:1014664329666248815> Pause the current song!")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def pause(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -241,9 +235,9 @@ async def pause(ctx):
     
     await ctx.respond("Music paused!")
 
-@music.child
-@lightbulb.command("resume", "Resume playing the current song!")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("resume", "<a:kirbeats:1014664329666248815> Resume playing the current song!")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def resume(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -256,9 +250,9 @@ async def resume(ctx):
     await lavalink.pause(ctx.guild_id, False)
     await ctx.respond("Music resumed!")
 
-@music.child
-@lightbulb.command("stop", "Stop the player and clear the queue!")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("stop", "<a:kirbeats:1014664329666248815> Stop the player and clear the queue!")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def stop(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -268,9 +262,9 @@ async def stop(ctx):
     await lavalink.stop(ctx.guild_id)
     await ctx.respond("Stopped the player and cleared the queue.")
 
-@music.child
-@lightbulb.command("skip", "Skip the current song!")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("skip", "<a:kirbeats:1014664329666248815> Skip the current song!")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def skip(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -279,10 +273,10 @@ async def skip(ctx):
     await lavalink.skip(ctx.guild_id)
     await ctx.respond("Skipped the current song.")
 
-@music.child
+@plugin.command
 @lightbulb.option("position", "Position to seek (Format: mm:ss or hh:mm:ss)")
-@lightbulb.command("seek", "Seek a position in the song!")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@lightbulb.command("seek", "<a:kirbeats:1014664329666248815> Seek a position in the song!")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def seek(ctx): # Convert input to milliseconds
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -303,9 +297,9 @@ async def seek(ctx): # Convert input to milliseconds
     await lavalink.seek(ctx.guild_id, ms)
     await ctx.respond(f"Position `{ctx.options.position}` seeked!")
 
-@music.child
-@lightbulb.command("queue", "Display the current queue", auto_defer = True)
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("queue", "<a:kirbeats:1014664329666248815> Display the current queue", auto_defer = True)
+@lightbulb.implements(lightbulb.SlashCommand)
 async def queue(ctx):
     # Check node and queue and return if either are None
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -368,11 +362,11 @@ async def queue(ctx):
         new_embed, new_buttons = assemble_page(new_page)
         await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await response.message(), embed = new_embed, component = new_buttons)
 
-@music.child
+@plugin.command
 @lightbulb.option("new_position", "The new queue position you want to move the song to. (1-based indexing)")
 @lightbulb.option("current_position", "The current queue position of the song you wish to move. (1-based indexing)")
-@lightbulb.command("move", "Move a song to a new position in the queue.")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@lightbulb.command("move", "<a:kirbeats:1014664329666248815> Move a song to a new position in the queue.")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def move(ctx):
     position = int(ctx.options.current_position) - 1
     new_position = int(ctx.options.new_position) - 1
@@ -401,10 +395,10 @@ async def move(ctx):
     
     await ctx.respond(embed = embed)
 
-@music.child
+@plugin.command
 @lightbulb.option("position", "The queue position of the song you wish to remove. (1-based indexing)")
-@lightbulb.command("remove", "Remove a song from the queue.")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@lightbulb.command("remove", "<a:kirbeats:1014664329666248815> Remove a song from the queue.")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def remove(ctx):
     position = int(ctx.options.position) - 1
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -427,9 +421,9 @@ async def remove(ctx):
     await lavalink.remove(ctx.guild_id, position)
     await ctx.respond(embed = embed)
 
-@music.child
-@lightbulb.command("np", "Check what song is currently playing.")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("np", "<a:kirbeats:1014664329666248815> Check what song is currently playing.")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def np_command(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -437,9 +431,9 @@ async def np_command(ctx):
         return
     await ctx.respond(f"[{node.queue[0].title}]({node.queue[0].uri})")
 
-@music.child
-@lightbulb.command("loop", "Toggle loop mode on/off", aliases=["l", "repeat"])
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("loop", "<a:kirbeats:1014664329666248815> Toggle loop mode on/off", aliases=["l", "repeat"])
+@lightbulb.implements(lightbulb.SlashCommand)
 async def loop_command(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -453,9 +447,9 @@ async def loop_command(ctx):
         return
     await ctx.respond("Stopped looping this song.")
 
-@music.child
-@lightbulb.command("loopqueue", "Toggle loop queue mode on/off.", aliases=["lq", "repeat_queue", "repeat_q"])
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("loopqueue", "<a:kirbeats:1014664329666248815> Toggle loop queue mode on/off.", aliases=["lq", "repeat_queue", "repeat_q"])
+@lightbulb.implements(lightbulb.SlashCommand)
 async def loop_queue_command(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -469,9 +463,9 @@ async def loop_queue_command(ctx):
         return
     await ctx.respond("Stopped looping the queue.")
 
-@music.child
-@lightbulb.command("shuffle", "Shuffle the queue!")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("shuffle", "<a:kirbeats:1014664329666248815> Shuffle the queue!")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def shuffle_command(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
     if not node or not node.queue:
@@ -480,9 +474,9 @@ async def shuffle_command(ctx):
     await lavalink.shuffle(ctx.guild_id)
     await ctx.respond("Shuffled the music!")
 
-@music.child
-@lightbulb.command("leave", "Leave the voice channel.")
-@lightbulb.implements(lightbulb.SlashSubCommand)
+@plugin.command
+@lightbulb.command("leave", "<a:kirbeats:1014664329666248815> Leave the voice channel.")
+@lightbulb.implements(lightbulb.SlashCommand)
 async def leave_command(ctx):
     states = plugin.app.cache.get_voice_states_view_for_guild(ctx.guild_id)
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == plugin.app.get_me().id)]

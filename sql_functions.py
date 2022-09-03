@@ -227,5 +227,3 @@ def fetch_feedback(feedback_type = None, date = None, author_id = None):
         return feedback_from_date
     else:
         return all_feedback
-
-print(fetch_todays_feedback(feedback_type = "broken"))

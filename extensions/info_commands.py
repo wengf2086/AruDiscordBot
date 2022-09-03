@@ -191,7 +191,7 @@ async def aru_info(ctx):
                        \n`user` `server` `pfp` `help` `commands`"
 
     # Music Commands Info
-    info_music_name = f"{utilities.FLAVOR.get('music')} /music commands: (Renovation in progress)"
+    info_music_name = f"{utilities.FLAVOR.get('music')} Music commands: (Renovation in progress)"
     info_music_value = "Play music!\
                         \n`play` `stop` `pause` `resume` `seek` `queue` `np` `move` `remove` `repeat` `shuffle` `leave`"
 
@@ -219,17 +219,17 @@ async def aru_info(ctx):
 @get_info.child
 @lightbulb.app_command_permissions(dm_enabled=True)
 @lightbulb.option('command_name','Which command would you like to learn more about?')
-@lightbulb.command('command', 'Learn more about a specific command! (Supported commands: \'addgif\')')
+@lightbulb.command('command', 'Learn more about a specific command!')
 @lightbulb.implements(lightbulb.SlashSubCommand, lightbulb.PrefixCommand)
 async def command_info(ctx):
     if ctx.options.command_name == "addgif":
-        await ctx.respond(f"{utilities.FLAVOR.get('primary_option')} Usage: `/action addgif [action name] [gif_link_1, gif_link_2, ..., gif_link_10]`\
+        await ctx.respond(f"{utilities.FLAVOR.get('primary_option')} Usage: `/addgif [action name] [gif_link_1, gif_link_2, ..., gif_link_10]`\
                            \n{utilities.FLAVOR.get('secondary_option')} This command allows you to add your own GIF link(s) for a specific `/action` command.\
                            \n{utilities.FLAVOR.get('secondary_option')} If a GIF is successfully added, it has a chance to show up when a user calls the respective action command.\
-                           \n{utilities.FLAVOR.get('secondary_option')} Sample Usage: `/action addgif bonk https://tenor.com/view/bonk-gif-21852548 https://c.tenor.com/9Q95PaJTxSYAAAAd/ina-bonk.gif`", flags = hikari.MessageFlag.EPHEMERAL)
+                           \n{utilities.FLAVOR.get('secondary_option')} Sample Usage: `/addgif bonk https://tenor.com/view/bonk-gif-21852548 https://c.tenor.com/9Q95PaJTxSYAAAAd/ina-bonk.gif`", flags = hikari.MessageFlag.EPHEMERAL)
 
     else:
-        await ctx.respond(f"No command info found for `{ctx.options.command_name}`.")
+        await ctx.respond(f"No command information found for `{ctx.options.command_name}`. (Coming soon!)")
 
 @plugin.command
 @lightbulb.app_command_permissions(dm_enabled=True)
@@ -237,12 +237,7 @@ async def command_info(ctx):
 @lightbulb.command('feedback', 'Got a question, comment, or suggestion? Share it with this command!')
 @lightbulb.implements(lightbulb.SlashCommand, lightbulb.PrefixCommand)
 async def feedback(ctx):
-    f = open(utilities.LOG_FILE_NAME, 'a')
-    new_line = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S") + '|' + str(ctx.author.id) + '|' + "FEEDBACK" + '|' + ctx.options.feedback + '\n'
-    f.write(new_line)
-    f.close()
-    await ctx.respond(response_type = 4, content = f"Your comment: `{ctx.options.feedback}`\
-                                                     \nThank you for helping Aru become a better bot! Your feedback is much appreciated and will be taken into consideration. {utilities.FLAVOR.get('kirbykiss')}", flags = hikari.MessageFlag.EPHEMERAL)
+    await ctx.respond("Coming reaaaaal soon. Sorry about that! For now, address all complaints directly to my creator, Cookie, by pinging him >:)")
 
 def load(bot):
     bot.add_plugin(plugin)
