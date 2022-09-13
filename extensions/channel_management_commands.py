@@ -4,9 +4,9 @@ import lightbulb
 plugin = lightbulb.Plugin('channel_management_commands')
 
 @plugin.command
-@lightbulb.command('send_announcement', 'ADMIN only. Don't touch.')
+@lightbulb.command('send_announcement', "ADMIN only. Don't touch.")
 @lightbulb.implements(lightbulb.SlashSubCommand, lightbulb.PrefixCommand)
-async def command_info(ctx):
+async def announce(ctx):
     if ctx.author.id != 173555466176036864:
         return
     text = f"""Hi `@`everyone! <a:kirbywave:1009321421152981032>\n
