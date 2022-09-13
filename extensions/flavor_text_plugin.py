@@ -42,7 +42,7 @@ async def start_bot(event):
     else: # Afternoon
         greeting_text = "Good afternoon!"
 
-    text = f"{greeting_text} It is now `{current_time.hour}:{current_time.minute}`. {utilities.FLAVOR.get('wink')} (Aru is now online.)"
+    text = f"{greeting_text} It is now `{current_time.hour}:{str(current_time.minute).zfill(2)}`. {utilities.FLAVOR.get('wink')} (Aru is now online.)"
     await plugin.app.rest.create_message(channel = utilities.FLAVOR_TEXT_CHANNEL, content = text)
 
 # When the bot is stopped, send a farewell

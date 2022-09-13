@@ -182,7 +182,6 @@ async def action_autocomplete(opt: hikari.AutocompleteInteractionOption, inter: 
     return matching
  
 @plugin.command 
-@lightbulb.add_checks(lightbulb.has_role_permissions(hikari.Permissions.ADMINISTRATOR))
 @lightbulb.option('gif_link', "Enter the gif link you wish to disable.", autocomplete=True)
 @lightbulb.command('disable_gif', '[ADMIN ONLY] Disable an action GIF for the /action command.')
 @lightbulb.implements(lightbulb.SlashCommand)
