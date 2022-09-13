@@ -24,9 +24,7 @@ I've got some news regarding club meetings that I'm excited to share with you al
 \n
 That's all! We also have some other events coming up this month (monthly movie night, first in-person meeting, giveaway event... ?!), so stay tuned for more info. Looking forward to seeing new (and old) members in our first meeting. :)"""
 
-    embed = hikari.Embed(description = text, color = hikari.Color(0xc38ed5))\
-        .add_field(name = f"", value = "", inline = False)\
-        .add_field(name = f"", value = "", inline = False)
+    embed = hikari.Embed(description = text, color = hikari.Color(0xc38ed5))
 
     await plugin.app.rest.create_message(channel = 752193230694645811, embed = embed)
 
