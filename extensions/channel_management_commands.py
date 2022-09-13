@@ -18,15 +18,13 @@ I've got some news regarding club meetings that I'm excited to share with you al
 - Online: `6:00 PM` to `8:00 PM`, on Discord (here!)
 
 2. __Our first meeting is *this* Friday, from `6:00 PM` to `8:00 PM`!__
-- It will be **online**, on Discord. Just join the <#752189506916057108>! voice channel at 6 PM; you should see some of us already in there.
+- It will be **online**, on Discord. Just join the <#752188246217195604>! voice channel at 6 PM; you should see some of us already in there.
 - We'll be doing introductions and icebreakers... <:kirbyblush:1011482397788885073> , as well as our annual anime + club trivia Kahoot!
 - We will be screening two anime shows, both randomly chosen from the suggestions left by new members at Club Fest. If you left an anime suggestion, you should join us and see if your anime was picked <:kirbyhappy:1011482402020921464> \n
 
 That's all! We also have some other events coming up this month (monthly movie night, first in-person meeting, giveaway event... ?!), so stay tuned for more info. Looking forward to seeing new (and old) members in our first meeting. :)"""
 
-    embed = hikari.Embed(description = text, color = hikari.Color(0xc38ed5))
-
-    await plugin.app.rest.create_message(channel = 752193230694645811, embed = embed)
+    await plugin.app.rest.create_message(channel = 752193230694645811, content = text)
 
 def load(bot):
     bot.add_plugin(plugin)
