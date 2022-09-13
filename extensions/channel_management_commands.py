@@ -5,7 +5,7 @@ plugin = lightbulb.Plugin('channel_management_commands')
 
 @plugin.command
 @lightbulb.command('send_announcement', "ADMIN only. Don't touch.")
-@lightbulb.implements(lightbulb.SlashSubCommand, lightbulb.PrefixCommand)
+@lightbulb.implements(lightbulb.SlashCommand, lightbulb.PrefixCommand)
 async def announce(ctx):
     if ctx.author.id != 173555466176036864:
         return
