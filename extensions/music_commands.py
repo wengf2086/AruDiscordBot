@@ -410,6 +410,10 @@ async def remove(ctx):
         await ctx.respond(f"Error: Invalid position. Must be between `1-{len(node.queue)}`")
         return
 
+    if position == 0:
+        await skip(ctx)
+        return
+
     song = queue[position]
     song_display = f"**[{position+1}]** [{song.title}]({song.uri}) ({convert_milliseconds(song.length)})"
     string = utilities.FLAVOR.get('secondary_option') + song_display + f" _requested by <@{song.requester}>_" + "\n"
