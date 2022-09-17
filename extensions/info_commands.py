@@ -122,7 +122,7 @@ async def get_info_on_server(ctx):
 @get_info.child
 @lightbulb.app_command_permissions(dm_enabled=True)
 @lightbulb.option('user', 'Mention the user you want the profile picture of or input their user ID', type = hikari.User, required = False)
-@lightbulb.command('pfp', 'Get a user\'s profile picture, or your own!')
+@lightbulb.command('avatar', 'Get a user\'s profile picture, or your own!', aliases=["profile", "avatar"])
 @lightbulb.implements(lightbulb.SlashSubCommand)
 async def get_profile_picture(ctx):
     if ctx.options.user:
@@ -188,7 +188,7 @@ async def aru_info(ctx):
     # Info Commands... Info
     info_info_name = f"{utilities.FLAVOR.get('question')} /info commands:"
     info_info_value = "Get info about a user, this server, me, or a specific command!\
-                       \n`user` `server` `pfp` `help` `commands`"
+                       \n`user` `server` `avatar` `help` `command`"
 
     # Music Commands Info
     info_music_name = f"{utilities.FLAVOR.get('music')} Music commands: (Renovation in progress)"
@@ -200,7 +200,7 @@ async def aru_info(ctx):
     info_feedback_value = "Let your heart out with the `/feedback` command. I'll listen to whatever you have to say... "
     
     # create embed to display information
-    await ctx.respond(hikari.Embed(title = f"{utilities.FLAVOR.get('greetings_2')} About Me", description = description, color = hikari.Color(0xc38ed5))\
+    await ctx.respond(hikari.Embed(title = f"{utilities.FLAVOR.get('greeting_2')} About Me", description = description, color = hikari.Color(0xc38ed5))\
         .set_thumbnail(member.avatar_url)\
         .add_field(name = f"{utilities.FLAVOR.get('primary_option')} Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
         .add_field(name = f"{utilities.FLAVOR.get('primary_option')} Total Server Count", value = f"Currently in {len(utilities.SERVERS)} servers", inline = True)\
