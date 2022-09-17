@@ -95,7 +95,7 @@ async def action(ctx):
     embed = hikari.Embed(color = hikari.Color(0xc38ed5)).set_image(gif.link)
 
     author = await plugin.app.rest.fetch_user(gif.author_id)
-    msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = action_string, embed = embed, user_mentions=True) # Sends the GIF
+    msg = await plugin.app.rest.create_message(channel = ctx.get_channel(), content = action_string, embed = embed, user_mentions=True) # Actually sends the GIF
     gif.incr_appearance() # Increment appearance attribute of the GIF in the database
 
     gif_info = f"This GIF was added by {author.mention} at `{gif.date_added}`."
@@ -186,6 +186,10 @@ async def action_autocomplete(opt: hikari.AutocompleteInteractionOption, inter: 
 @lightbulb.command('disable_gif', '[ADMIN ONLY] Disable an action GIF for the /action command.')
 @lightbulb.implements(lightbulb.SlashCommand)
 async def disable_gif(ctx):
+    if ctx.author.id != 173555466176036864:
+        ctx.respond("You don't have permission to use this command.", flags = hikari.MessageFlag.EPHEMERAL)
+        return
+
     link = ctx.options.gif_link
     if not link.endswith(".gif"): # if link doesn't end with '.gif', attempt to extract gif from URL
         link = extract_gif_link_from_url(link)
@@ -194,10 +198,10 @@ async def disable_gif(ctx):
         gif.disable()
         if gif.is_disabled:
             embed = hikari.Embed(title = "Disabled the GIF:", description = link, color = hikari.Color(0xc38ed5)).set_image(link)
-            ctx.respond(embed)
+            await ctx.respond(embed)
         else:
            embed = hikari.Embed(title = "Enabled the GIF:", description = link, color = hikari.Color(0xc38ed5)).set_image(link)
-           ctx.respond(embed)
+           await ctx.respond(embed)
     else:
         ctx.respond("Error: GIF not found.")
 
