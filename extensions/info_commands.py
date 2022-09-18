@@ -2,6 +2,7 @@ import hikari
 import lightbulb
 import datetime
 import utilities
+import sql_functions
 
 plugin = lightbulb.Plugin('info_commands')
 
@@ -237,7 +238,17 @@ async def command_info(ctx):
 @lightbulb.command('feedback', 'Got a question, comment, or suggestion? Share it with this command!')
 @lightbulb.implements(lightbulb.SlashCommand, lightbulb.PrefixCommand)
 async def feedback(ctx):
-    await ctx.respond("Coming reaaaaal soon. Sorry about that! For now, address all complaints directly to my creator, Cookie, by pinging him >:)")
+    feedback = sql_functions.fetch_todays_feedback(author_id = ctx.author.id) # Get all the feedback sent by the author today
+    if ctx.author.id != 173555466176036864 and feedback and len(feedback) >= utilities.DAILY_FEEDBACK_LIMIT: # Daily Interaction Limit Reached, do not allow further feedback.
+        await ctx.respond(content = f"You have reached your maximum feedback limit today. Thanks for your input!", flags = hikari.MessageFlag.EPHEMERAL)
+        return
+
+    sql_functions.add_feedback(feedback_type = "comment", author_id = ctx.author.id, info = ctx.options.feedback)
+    message = f"""
+    Your comment: 
+> `{ctx.options.feedback}`
+Your response has been recorded and will be reviewed. Thank you for your input! {utilities.FLAVOR.get('kiss')}"""
+    await ctx.respond(content = message, flags = hikari.MessageFlag.EPHEMERAL)
 
 def load(bot):
     bot.add_plugin(plugin)
