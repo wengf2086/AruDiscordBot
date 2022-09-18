@@ -348,7 +348,7 @@ async def queue(ctx):
             buttons.add_button(2, f"invalid|{prev_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse(utilities.FLAVOR.get('left_arrow'))).set_is_disabled(True).add_to_container()
         
         if not (next_button_to_page >= num_pages): # check if index out of bounds. if yes, disable the button
-            buttons.add_button(2, f"page|{next_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse(utilities.FLAVOR.get('left_arrow'))).add_to_container()
+            buttons.add_button(2, f"page|{next_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse(utilities.FLAVOR.get('right_arrow'))).add_to_container()
         else: 
             buttons.add_button(2, f"invalid|{next_button_to_page}|{unique_id}").set_emoji(hikari.Emoji.parse(utilities.FLAVOR.get('right_arrow'))).set_is_disabled(True).add_to_container()
 
