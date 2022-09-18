@@ -4,8 +4,11 @@ Made by me, cookie#0837 on Discord. Feel free to add me and ask me any questions
 [Invite Aru](https://discord.com/api/oauth2/authorize?client_id=1009180210823970956&permissions=8&scope=applications.commands%20bot) to your server!
 
 ## What does Aru do?
-Aru is an aesthetic multi-purpose Discord bot with "action" commands, music commands, info commands, and more!
-
+Aru is an aesthetic, anime-themed multi-purpose Discord bot with "action" commands, music commands, info commands, and more!
+* Lilac-purple themed
+* Cute custom emojis and buttons
+* User-friendly UI
+* Interactive and collaborative database (see below for more info!)
 
 ### Action Commands
 The /action command allows a user to specify an action, e.g., "blush", "slap", "wink", and direct it towards another user. Aru will fetch a random anime gif from her database corresponding to the specified action and send it to the channel that the command was used in, along with a message describing what action has been performed, mentioning both the actor and recipient of the action. Here's an example:
