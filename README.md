@@ -12,8 +12,13 @@ The /action command allows a user to specify an action, e.g., "blush", "slap", "
 ![action command example image](/images/action_command_example.png)
 ![action command example2 image](/images/action_command_example_2.png)
 
+See? Fun for everyone!
+* If you're not sure what actions are available for use, don't worry! When you input the action name, there'll be a dropdown menu that you can select from.
+
 #### Adding a GIF to the database
 One of Aru's shining features is that she allows users to contribute their own GIFs to the database that she fetches GIFs from! To do so, a user can use the /addgif command, like so:
 
 ![addgif command example image](/images/addgif_command_example.png)
 ![addgif command example2 image](/images/addgif_command_example_2.png)
+
+

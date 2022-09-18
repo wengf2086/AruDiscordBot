@@ -114,7 +114,7 @@ async def action(ctx):
     await ctx.respond(content = gif_info, component = buttons, flags = hikari.MessageFlag.EPHEMERAL)
 
     if recipient.id == 1009180210823970956: # a quirky response if an action is done to Aru.
-        await ctx.respond(attachment = '/images/action_response.png')
+        await ctx.respond(attachment = '../images/action_response.png')
 
     while (event := (await response_to_interaction(30, unique_id))) != -1:
         if event.interaction.custom_id.split("|")[0] == "upvote":
