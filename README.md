@@ -49,7 +49,7 @@ play, stop, pause, resume, seek, queue, np, move, remove, repeat, shuffle, leave
 I'm also thinking about creating an interactive music player with buttons so that users don't have to type commands to pause, resume, repeat, shuffle, and loop the queue. We'll see when I can get to that.
 
 ### Info Commands
-Aru also provides info commands that will show information about a user or server:
+Aru also provides info commands that will show information about a user or server, fetch a user's profile picture, or provide an explanation about a specific command.
 
 #### Getting User Information
 Displays information about the specified user. Information available depends on whether or not the user is a member of the current server.
@@ -65,12 +65,12 @@ Command: /info server
 
 ![info server example image](/images/info_server_example.png)
 
-#### /info command command_name:command
+#### Getting Command Information
 Displays information about a specific command and its usage.
 
 Coming soon!
 
-#### /info avatar user:@user#tag
+#### Getting a User's Avatar
 Fetchs the specified user's profile picture and URL (or the author's profile picture if no user is specified).
 
 Command: /info avatar user:@user#tag
