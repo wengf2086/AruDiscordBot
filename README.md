@@ -87,6 +87,25 @@ To see a full list of commands, use the command:
 ![info help example image](/images/info_help_example.png)
 
 ### Thanks for using Aru!
+Here's a little tidbit about Aru's creation.
+I made Aru for a few reasons:
+1. There are many other bots out there, but they all had features that I felt like could be improved on.
+2. The UIs for other bots were ugly.
+3. I'm on the E-Board for a club for my school, and I thought that making a bot to manage online events would be fun and also make things a lot easier. Here are some things that Aru will soon be able to do:
+* Make announcements (Actually, I've already implemented this lol)
+* Break people up into different voice channels
+* Temporarily modify voice channel names to match a club activity
+* Create temporary text channels for a club activity with descriptions that explain the club activity
+4. I taught myself Python a week before making Aru, and I got excited when I learned that there were python APIs available to create discord bots. I wanted to test my skills and expand my knowledge, so here I am!
+
+Making Aru was honestly so fun and fulfilling. I implemented a lot more functions for her than I initially anticipated, and I have many more plans for her. 
+
+Special thanks to:
+* hikari devs for making a straightfoward API
+* hikari Support Server for general support
+* Antimatter#2557 for helping me with music commands
+
+Making Aru would still have been possible, but A LOT harder if it weren't for the people above. So... thank you for being patient, kind and helpful! :3
 
 
 
