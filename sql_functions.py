@@ -12,7 +12,7 @@ class Gif():
         Adds a gif link to the database.
         date_added format: ("%m/%d/%y, %H:%M:%S")'''
         if date == None:
-            date = datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            date = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         insert_gif(action_name, date, author_id, gif_link)
 
     @staticmethod

@@ -36,7 +36,7 @@ To use emojis, use the emoji's mention string but replace `<` with `§`, e.g., `
 (To get an emoji's mention string, type `\`:emoji_name:. If you don't have nitro, this won't work for animated emojis, so you'll have to find someone with nitro or get the mention string some other way. :()
 Example Usage: """
 
-    init_msg = await ctx.respond(content = instructions, attachment = 'announce_example.png')
+    init_msg = await ctx.respond(content = instructions, attachment = 'images/announce_example.png')
 
     event = await response_to_message(timeout = 60, initial_message_id = (await init_msg.message()).id)
             
