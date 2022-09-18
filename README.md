@@ -15,6 +15,7 @@ The action command allows a user to specify an action (e.g., "blush", "slap", "w
 
 ![action command example image](/images/action_command_example.png)
 ![action command example2 image](/images/action_command_example_2.png)
+
 See? Fun for everyone!
 * If you're not sure what actions are available for use, don't worry! When you input the action name, there'll be a dropdown menu that you can select from.
 
@@ -35,6 +36,7 @@ Once a report has been made, the GIF will be deleted and the report will be logg
 
 ### Music Commands
 What's a multi-purpose Discord bot without music commands? Aru allows you to query and play tracks from YouTube (and soon, Spotify as well!):
+
 ![query example image](/images/query_example.png)
 
 Viewing the queue:
@@ -85,10 +87,6 @@ To see a full list of commands, use the command:
 ![info help example image](/images/info_help_example.png)
 
 ### Thanks for using Aru!
-
-
-
-
 
 
 
