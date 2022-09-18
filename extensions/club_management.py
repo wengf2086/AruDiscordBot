@@ -33,7 +33,7 @@ This is just a draft announcement, and will be sent in this channel (<#{ctx.chan
 Reply to this message with the message you'd like to announce!
 **Put \\`\\`\\` before and after the message.**
 To use emojis, use the emoji's mention string but replace `<` with `§`, e.g., `§a:kirbywave:1009321421152981032>`. {utilities.FLAVOR_ARU.get('wink')}
-(To get an emoji's mention string, type `\`:emoji_name:. If you don't have nitro, this won't work for animated emojis, so you'll have to find someone with nitro or get the mention string some other way. :()
+(To get an emoji's mention string, type `\\`:emoji_name:. If you don't have nitro, this won't work for animated emojis, so you'll have to find someone with nitro or get the mention string some other way. :()
 Example Usage: """
 
     init_msg = await ctx.respond(content = instructions, attachment = 'images/announce_example.png')
