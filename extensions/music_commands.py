@@ -101,14 +101,6 @@ async def play(ctx):
     elif isinstance(result, lavaplayer.TrackLoadFailed):  # if track fails to load
         await ctx.respond("Track load failed, try again later.\n```{}```".format(result.message))
         return
-    
-    number_emojis = { # emojis for numbering the query results
-        1 : utilities.FLAVOR.get('num_1'),
-        2: utilities.FLAVOR.get('num_2'),
-        3: utilities.FLAVOR.get('num_3'),
-        4: utilities.FLAVOR.get('num_4'),
-        5: utilities.FLAVOR.get('num_5')
-    }
 
     if isinstance(result, list) and len(result) > 1: # A query, not a URL. Show query and allow user to select an option.
         unique_id = str(uuid.uuid1()) # 36 character unique identifier to receive unique interaction responses
@@ -116,8 +108,9 @@ async def play(ctx):
         buttons = plugin.app.rest.build_action_row()
         display_len = 5 if len(result) >= 5 else len(result)
         for i in range(display_len): # [{i.title}]({i.uri})
-            display_query += f"{utilities.FLAVOR.get('primary_option')}{number_emojis.get(i+1)} [{result[i].title}]({result[i].uri}) ({convert_milliseconds(result[i].length)})\n\n"
-            buttons.add_button(2, f"qs|{i}|{unique_id}").set_emoji(hikari.Emoji.parse(number_emojis.get(i+1))).add_to_container()
+            number_emoji = utilities.FLAVOR.get(f'num_{i+1}')
+            display_query += f"{utilities.FLAVOR.get('primary_option')}{number_emoji} [{result[i].title}]({result[i].uri}) ({convert_milliseconds(result[i].length)})\n\n"
+            buttons.add_button(2, f"qs|{i}|{unique_id}").set_emoji(hikari.Emoji.parse(number_emoji)).add_to_container()
         
         embed = hikari.Embed(title = f"Select a song to add to the queue!", description = display_query, color = hikari.Color(0xc38ed5))\
         .set_author(name = f"Query Results For: \"{query}\"", icon = plugin.app.get_me().avatar_url)
@@ -132,9 +125,11 @@ async def play(ctx):
             await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
             return
         else:
+            number_emoji = utilities.FLAVOR.get(f'num_{query_selection+1}')
+
             await lavalink.play(ctx.guild_id, result[query_selection], ctx.author.id)
             embed = hikari.Embed(title = f"Song selected:", \
-                                 description = f"{utilities.FLAVOR.get('primary_option')} {number_emojis.get(query_selection+1)} [{result[query_selection].title}]({result[query_selection].uri}) ({convert_milliseconds(result[query_selection].length)})", \
+                                 description = f"{utilities.FLAVOR.get('primary_option')} {number_emoji} [{result[query_selection].title}]({result[query_selection].uri}) ({convert_milliseconds(result[query_selection].length)})", \
                                  color = hikari.Color(0xc38ed5)) \
             .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
             .set_author(name = f"The following song has been added to the queue at position {len(node.queue) if node else 1}.", icon = plugin.app.get_me().avatar_url)
