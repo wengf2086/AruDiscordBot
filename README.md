@@ -1,6 +1,8 @@
-# AruDiscordBot
+# Aru Discord Bot
 This is my Discord Bot, Aru!
-Made by me, cookie#0837 on Discord. Feel free to add me and ask me any questions you might have about my bot.
+
+Made by me, cookie#0837, on Discord. Feel free to add me and ask me any questions you might have about my bot.
+
 [Invite Aru](https://discord.com/api/oauth2/authorize?client_id=1009180210823970956&permissions=8&scope=applications.commands%20bot) to your server!
 
 ## What does Aru do?
@@ -105,7 +107,7 @@ Special thanks to:
 * hikari Support Server for general support
 * Antimatter#2557 for helping me with music commands
 
-Making Aru would still have been possible, but A LOT harder if it weren't for the people above. So... thank you for being patient, kind and helpful! :3
+Making Aru would still have been possible, but A LOT harder if it weren't for the people above. So... thank you for your patience, kindness, and helpfulness! :3c
 
 
 

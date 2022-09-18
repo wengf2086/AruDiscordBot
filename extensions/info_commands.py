@@ -202,7 +202,7 @@ async def aru_info(ctx):
     info_feedback_value = "Let your heart out with the `/feedback` command. I'll listen to whatever you have to say... "
     
     # create embed to display information
-    await ctx.respond(hikari.Embed(title = f"{utilities.FLAVOR.get('greeting_2')} About Me", description = description, color = hikari.Color(0xc38ed5))\
+    await ctx.respond(hikari.Embed(title = f"{utilities.FLAVOR.get('greeting_2')} About Me", url = "https://github.com/wengf2086/AruDiscordBot", description = description, color = hikari.Color(0xc38ed5))\
         .set_thumbnail(member.avatar_url)\
         .add_field(name = f"{utilities.FLAVOR.get('primary_option')} Joined {server_name if len(server_name) <= 16 else 'Server'} On", value = str(member.joined_at)[:19], inline = True)\
         .add_field(name = f"{utilities.FLAVOR.get('primary_option')} Total Server Count", value = f"Currently in {len(utilities.SERVERS)} servers", inline = True)\
