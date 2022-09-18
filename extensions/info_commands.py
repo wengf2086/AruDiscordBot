@@ -174,8 +174,9 @@ async def aru_info(ctx):
 
     # Action Commands Info
     action_names_string = f"{' '.join(['`' + action_name + '`' for action_name in list(utilities.ACTIONS.keys())])}"
-    info_action_name = f"{utilities.FLAVOR.get('exclamation')} /action commands:"
+    info_action_name = f"{utilities.FLAVOR.get('exclamation')} Action commands:"
     info_action_value = f"Get a random anime GIF of a specific action and direct it towards another user!\
+                          \nCategories:\
                           \n{action_names_string}\
                           \n\nDid you know you can add your own GIFs? Find out how:\
                           \n`/info command addgif`"
@@ -209,9 +210,9 @@ async def aru_info(ctx):
         .add_field(name = f"{utilities.FLAVOR.get('primary_option')} My Birthday", value = str(member.created_at)[:19], inline = True)\
         .add_field(name = f"{utilities.FLAVOR.get('primary_option')} My Creator", value = f"{display_creator}", inline = True)\
         .add_field(name = info_action_name, value = info_action_value, inline = False)\
-        .add_field(name = info_fun_name, value = info_fun_value, inline = False)\
-        .add_field(name = info_info_name, value = info_info_value, inline = False)\
         .add_field(name = info_music_name, value = info_music_value, inline = False)\
+        .add_field(name = info_info_name, value = info_info_value, inline = False)\
+        .add_field(name = info_fun_name, value = info_fun_value, inline = False)\
         .add_field(name = info_feedback_name, value = info_feedback_value, inline = False)\
         .set_footer(text = f"Current Uptime: {uptime_days} days, {uptime_hours} hours, {uptime_minutes} minutes, {uptime_seconds} seconds. Thanks for having me! ❤️", icon = member.avatar_url)
         .set_author(name = "More About Aru", icon = ctx.get_guild().icon_url)\
@@ -223,14 +224,15 @@ async def aru_info(ctx):
 @lightbulb.command('command', 'Learn more about a specific command!')
 @lightbulb.implements(lightbulb.SlashSubCommand, lightbulb.PrefixCommand)
 async def command_info(ctx):
-    if ctx.options.command_name == "addgif":
-        await ctx.respond(f"{utilities.FLAVOR.get('primary_option')} Usage: `/addgif [action name] [gif_link_1, gif_link_2, ..., gif_link_10]`\
-                           \n{utilities.FLAVOR.get('secondary_option')} This command allows you to add your own GIF link(s) for a specific `/action` command.\
-                           \n{utilities.FLAVOR.get('secondary_option')} If a GIF is successfully added, it has a chance to show up when a user calls the respective action command.\
-                           \n{utilities.FLAVOR.get('secondary_option')} Sample Usage: `/addgif bonk https://tenor.com/view/bonk-gif-21852548 https://c.tenor.com/9Q95PaJTxSYAAAAd/ina-bonk.gif`", flags = hikari.MessageFlag.EPHEMERAL)
+    command_information = {
+        "command_name":
+        f"""
+info
+        """
+    }
 
-    else:
-        await ctx.respond(f"No command information found for `{ctx.options.command_name}`. (Coming soon!)")
+    await ctx.respond(command_information.get(ctx.options.command_name), \
+    f"No command information found for `{ctx.options.command_name}`. This command is currently a WIP, and will be updated soon. Sorry about that!")
 
 @plugin.command
 @lightbulb.app_command_permissions(dm_enabled=True)

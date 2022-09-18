@@ -180,30 +180,6 @@ async def action_autocomplete(opt: hikari.AutocompleteInteractionOption, inter: 
         if action.startswith(opt.value):
             matching.append(action)
     return matching
- 
-@plugin.command 
-@lightbulb.option('gif_link', "Enter the gif link you wish to disable.", autocomplete=True)
-@lightbulb.command('disable_gif', '[ADMIN ONLY] Disable an action GIF for the /action command.')
-@lightbulb.implements(lightbulb.SlashCommand)
-async def disable_gif(ctx):
-    if ctx.author.id != 173555466176036864:
-        ctx.respond("You don't have permission to use this command.", flags = hikari.MessageFlag.EPHEMERAL)
-        return
-
-    link = ctx.options.gif_link
-    if not link.endswith(".gif"): # if link doesn't end with '.gif', attempt to extract gif from URL
-        link = extract_gif_link_from_url(link)
-    gif = Gif.get_gif_from_link(link)
-    if gif:
-        gif.disable()
-        if gif.is_disabled:
-            embed = hikari.Embed(title = "Disabled the GIF:", description = link, color = hikari.Color(0xc38ed5)).set_image(link)
-            await ctx.respond(embed)
-        else:
-           embed = hikari.Embed(title = "Enabled the GIF:", description = link, color = hikari.Color(0xc38ed5)).set_image(link)
-           await ctx.respond(embed)
-    else:
-        ctx.respond("Error: GIF not found.")
 
 async def response_to_interaction(timeout, unique_id):
     '''Returns interaction response event, or -1 if interaction times out.'''

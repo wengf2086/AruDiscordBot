@@ -145,9 +145,19 @@ def disable_gif(gif_link):
         c.execute("SELECT * FROM gifs WHERE link=:gif_link", {'gif_link': gif_link})
         gif = c.fetchone()
         currently_disabled = gif[8] 
+        print(f"Currently Disabled: {currently_disabled}")
         new_value = 0 if currently_disabled else 1
+        print(f"New Value: {new_value}")
         c.execute("UPDATE gifs SET is_disabled = :new_value WHERE link=:gif_link", {'new_value': new_value, 'gif_link': gif_link})
     conn.close()
+
+def fetch_gifs(category):
+    conn = sqlite3.connect(db_dir)
+    c = conn.cursor()
+    c.execute("SELECT * FROM gifs WHERE action_name=:category", {'category':category})
+    gifs = c.fetchall()
+    conn.close()
+    return gifs
 
 def fetch_all_gifs():
     conn = sqlite3.connect(db_dir)
@@ -227,5 +237,3 @@ def fetch_feedback(feedback_type = None, date = None, author_id = None):
         return feedback_from_date
     else:
         return all_feedback
-
-print(fetch_todays_feedback())
