@@ -6,7 +6,6 @@ import logging
 import asyncio
 import uuid
 import math
-
 import utilities
 
 plugin = lightbulb.Plugin('music_commands')
@@ -76,15 +75,14 @@ async def join(ctx):
     await ctx.respond(f"Joined <#{channel_id}>!")
 
 @plugin.command
-@lightbulb.option("query", "Search for a song or input a YouTube link!")
+@lightbulb.option("query", "Search a song or input a link! (YouTube, Spotify, Soundcloud, Bandcamp, Twitch, and Vimeo supported)")
 @lightbulb.command("play", "[🎵 ] Play a song or playlist!", aliases=["p"], auto_defer = True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def play(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
-    # If the bot is not in a voice channel, attempt to join one
     states = plugin.app.cache.get_voice_states_view_for_guild(ctx.guild_id)
     voice_state = [state async for state in states.iterator().filter(lambda i: i.user_id == plugin.app.get_me().id)]
-    if not voice_state: 
+    if not voice_state: # If the bot is not in a voice channel, attempt to join one
         channel_id = await try_join(ctx, states)
         if not channel_id:
             await ctx.respond("You are not in a voice channel. Join one first!")
@@ -92,109 +90,155 @@ async def play(ctx):
         else:
             await ctx.respond(f"Joined <#{channel_id}>!")
 
-    # Parse Query
-    query = ctx.options.query
-    result = await lavalink.auto_search_tracks(ctx.options.query)  # Search the query
-    if not result:
-        await ctx.respond("No result found for the specified query. Please try again.")
-        return
-    elif isinstance(result, lavaplayer.TrackLoadFailed):  # if track fails to load
-        await ctx.respond("Track load failed, try again later.\n```{}```".format(result.message))
-        return
+    query = ctx.options.query # parse the query
 
-    if isinstance(result, list) and len(result) > 1: # A query, not a URL. Show query and allow user to select an option.
-        unique_id = str(uuid.uuid1()) # 36 character unique identifier to receive unique interaction responses
-        display_query = ""
-        buttons = plugin.app.rest.build_action_row()
-        display_len = 5 if len(result) >= 5 else len(result)
-        for i in range(display_len): # [{i.title}]({i.uri})
-            number_emoji = utilities.FLAVOR.get(f'num_{i+1}')
-            display_query += f"{utilities.FLAVOR.get('primary_option')}{number_emoji} [{result[i].title}]({result[i].uri}) ({convert_milliseconds(result[i].length)})\n\n"
-            buttons.add_button(2, f"qs|{i}|{unique_id}").set_emoji(hikari.Emoji.parse(number_emoji)).add_to_container()
-        
-        embed = hikari.Embed(title = f"Select a song to add to the queue!", description = display_query, color = hikari.Color(0xc38ed5))\
-        .set_author(name = f"Query Results For: \"{query}\"", icon = plugin.app.get_me().avatar_url)
-        
-        initial_response = await ctx.respond(embed = embed, component = buttons)
-        query_selection = await respond_to_interaction(15, str(unique_id), ctx.author.id)
-        if query_selection == -1: # Response time-out
-            embed = hikari.Embed(title = f"No song selected", \
-                                 description = f"No song was selected, so nothing was added to the queue.", \
-                                 color = hikari.Color(0xc38ed5)) \
-            .set_author(name = f"Nothing was added to the queue.", icon = plugin.app.get_me().avatar_url)
-            await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
+    # Spotify (uses spotilink)
+    if query.startswith("https://open.spotify.com/"):
+        if query.startswith("https://open.spotify.com/track/"): # Link to a single track
+            await ctx.respond("This is a spotify track.")
+            pass
+
+        elif query.startswith("https://open.spotify.com/album/"): # Link to an album
+            await ctx.respond("This is a spotify album.")
+            pass
+
+        elif query.startswith("https://open.spotify.com/playlist/"): # Link to a playlist
+            await ctx.respond("This is a spotify playlist.")
+            pass
+
+    # YouTube, Bandcamp, Soundcloud, Twitch, Vimeo (uses lavalink)
+    else:
+        result = await lavalink.auto_search_tracks(ctx.options.query)  # Search the query
+        if not result: # No result found, return
+            await ctx.respond("No result found for the specified query. Please try again.")
             return
-        else:
-            number_emoji = utilities.FLAVOR.get(f'num_{query_selection+1}')
 
-            await lavalink.play(ctx.guild_id, result[query_selection], ctx.author.id)
-            embed = hikari.Embed(title = f"Song selected:", \
-                                 description = f"{utilities.FLAVOR.get('primary_option')} {number_emoji} [{result[query_selection].title}]({result[query_selection].uri}) ({convert_milliseconds(result[query_selection].length)})", \
-                                 color = hikari.Color(0xc38ed5)) \
-            .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-            .set_author(name = f"The following song has been added to the queue at position {len(node.queue) if node else 1}.", icon = plugin.app.get_me().avatar_url)
-            await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
-        return
+        elif isinstance(result, lavaplayer.TrackLoadFailed):  # Track failed to load, return
+            await ctx.respond("Track load failed, try again later.\n```{}```".format(result.message))
+            return
 
-    else: # A URL
-        if "&list=" in query:
-            unique_id = uuid.uuid1() # 36 character unique identifier to receive unique interaction responses
-            playlist_url = f"https://www.youtube.com/playlist?{query[query.index('list='):]}"
-            single_url = query[:query.index('&list=')]
-            result = await lavalink.auto_search_tracks(single_url)
-            playlist_result = await lavalink.auto_search_tracks(playlist_url)
-            requested_song = f"{utilities.FLAVOR.get('primary_option')} [{result[0].title}]({result[0].uri}) ({convert_milliseconds(result[0].length)})"
+        # result is a query. Show the query and allow the user to select an option
+        elif isinstance(result, list) and len(result) > 1: 
+            unique_id = str(uuid.uuid1()) # 36 character unique identifier to receive unique interaction responses
             buttons = plugin.app.rest.build_action_row()
-            buttons.add_button(3, f"pl|1|{unique_id}").set_label("Yes").add_to_container()
-            buttons.add_button(4, f"pl|0|{unique_id}").set_label("No").add_to_container()
+            display_query = ""
+            display_len = 5 if len(result) >= 5 else len(result) # Number of options to show. If there are less than 5 results, just whatever there is.
+            for i in range(display_len): # Display display_len options
+                number_emoji = utilities.FLAVOR.get(f'num_{i+1}') # Get corresponding number emoji
+                display_query += f"{utilities.FLAVOR.get('primary_option')}{number_emoji} [{result[i].title}]({result[i].uri}) ({convert_milliseconds(result[i].length)})\n\n" # The query option string
+                buttons.add_button(2, f"qs|{i}|{unique_id}").set_emoji(hikari.Emoji.parse(number_emoji)).add_to_container() # Add the corresponding button
             
-            embed = hikari.Embed(title = f"Song Requested", description = f"{requested_song}\n\n**The requested song belongs to a playlist:**\n\
-                 {utilities.FLAVOR.get('secondary_option')} [{playlist_result.name}]({playlist_url}) ({get_total_length_of_tracks(playlist_result.tracks)}), {len(playlist_result.tracks)} songs total\n\
-                 \n**Do you want to add the whole playlist as well?**", color = hikari.Color(0xc38ed5))\
-            .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-            .set_author(name = f"The following song has been requested.", icon = plugin.app.get_me().avatar_url)
-
+            # Embed for Query Selection Message
+            embed = hikari.Embed(title = f"Select a song to add to the queue!", description = display_query, color = hikari.Color(0xc38ed5))\
+            .set_author(name = f"Query Results For: \"{query}\"", icon = plugin.app.get_me().avatar_url)
+            
+            # Send the embed
             initial_response = await ctx.respond(embed = embed, component = buttons)
 
-            playlist_selection = await respond_to_interaction(15, str(unique_id), ctx.author.id)
-            if playlist_selection == 1: # If "Yes" was selected
-                await lavalink.add_to_queue(ctx.guild_id, playlist_result.tracks, ctx.author.id)
+            # Wait for the user's selection and store it in query_selection, or time-out
+            query_selection = await respond_to_interaction(15, str(unique_id), ctx.author.id)
+
+            if query_selection == -1: # Response time-out
+                embed = hikari.Embed(title = f"No song selected", \
+                                    description = f"No song was selected, so nothing was added to the queue.", \
+                                    color = hikari.Color(0xc38ed5)) \
+                .set_author(name = f"Nothing was added to the queue.", icon = plugin.app.get_me().avatar_url)
+                await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
+                return
+            else: 
+                number_emoji = utilities.FLAVOR.get(f'num_{query_selection+1}') # Get corresponding number emoji
+
+                await lavalink.play(ctx.guild_id, result[query_selection], ctx.author.id) # Add the selected track to the queue
+
+                # Embed for Query Selected Message
+                embed = hikari.Embed(title = f"Song selected:", \
+                                    description = f"{utilities.FLAVOR.get('primary_option')} {number_emoji} [{result[query_selection].title}]({result[query_selection].uri}) ({convert_milliseconds(result[query_selection].length)})", \
+                                    color = hikari.Color(0xc38ed5)) \
+                .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
+                .set_author(name = f"The following song has been added to the queue at position {len(node.queue) if node else 1}.", icon = plugin.app.get_me().avatar_url)
+
+                # Edit the initial Query Selection Message to reflect the Query Selection
+                await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
+
+        # result is a URL. Check if URL is a playlist or a single track
+        else:
+            # URL leads to a track that is part of a playlist. Ask the user if they want to queue the whole playlist.
+            if "&list=" in query:
+                unique_id = uuid.uuid1() # 36 character unique identifier to receive unique interaction responses
+                single_url = query[:query.index('&list=')] # get the link to the single track
+                playlist_url = f"https://www.youtube.com/playlist?{query[query.index('list='):]}" # construct the link to the playlist that the track belongs to
+                result = await lavalink.auto_search_tracks(single_url) # Search the individual track
+                playlist_result = await lavalink.auto_search_tracks(playlist_url) # Search the playlist
+                requested_song = f"{utilities.FLAVOR.get('primary_option')} [{result[0].title}]({result[0].uri}) ({convert_milliseconds(result[0].length)})"
+
+                buttons = plugin.app.rest.build_action_row()
+                buttons.add_button(3, f"pl|1|{unique_id}").set_label("Yes").add_to_container()
+                buttons.add_button(4, f"pl|0|{unique_id}").set_label("No").add_to_container()
+            
+                # Embed for Playlist Add Selection
+                embed = hikari.Embed(title = f"Song Requested", description = f"{requested_song}\n\n**The requested song belongs to a playlist:**\n\
+                    {utilities.FLAVOR.get('secondary_option')} [{playlist_result.name}]({playlist_url}) ({get_total_length_of_tracks(playlist_result.tracks)}), {len(playlist_result.tracks)} songs total\n\
+                    \n**Do you want to add the whole playlist as well?**", color = hikari.Color(0xc38ed5))\
+                .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
+                .set_author(name = f"The following song has been requested.", icon = plugin.app.get_me().avatar_url)
+
+                # Send the Embed
+                initial_response = await ctx.respond(embed = embed, component = buttons)
+
+                # Wait for the user's selection and store it in playlist_selection
+                playlist_selection = await respond_to_interaction(15, str(unique_id), ctx.author.id)
+
+                if playlist_selection == 1: # If "Yes" was selected
+                    await lavalink.add_to_queue(ctx.guild_id, playlist_result.tracks, ctx.author.id) # Add the whole playlist to the queue
+
+                    # Embed for Playlist Added Confirmation Message
+                    embed = hikari.Embed(title = f"Playlist added: ", \
+                                        description = f"{utilities.FLAVOR.get('primary_option')} [{playlist_result.name}]({playlist_url}) ({get_total_length_of_tracks(playlist_result.tracks)}), {len(playlist_result.tracks)} songs total", \
+                                        color = hikari.Color(0xc38ed5)) \
+                    .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
+                    .set_author(name = f"Multiple songs have been added to the queue.", icon = plugin.app.get_me().avatar_url)
+
+                    # Edit the initial Playlist Add Selection message to reflect that the playlist has been added
+                    await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
+                    
+                else: # If "No" was selected, or the interaction times out
+                    await lavalink.play(ctx.guild_id, result[0], ctx.author.id) # Add the single track to the queue
+
+                    # Embed for Playlist Not Added Confirmation Message
+                    embed = hikari.Embed(title = f"Song requested", description = f"{requested_song}\n\n**The corresponding playlist was not added.**", color = hikari.Color(0xc38ed5))\
+                    .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
+                    .set_author(name = f"The following song has been added to the queue at position {len(node.queue)}.", icon = plugin.app.get_me().avatar_url)
+
+                    # Edit the initial Playlist Add Selection message to reflect that the playlist has not been added
+                    await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
+
+            # URL leads to a playlist
+            elif isinstance(result, lavaplayer.PlayList):
+                await lavalink.add_to_queue(ctx.guild_id, result.tracks, ctx.author.id) # Add the playlist to the queue
+
+                # Embed for Playlist Added Message
                 embed = hikari.Embed(title = f"Playlist added: ", \
-                                    description = f"{utilities.FLAVOR.get('primary_option')} [{playlist_result.name}]({playlist_url}) ({get_total_length_of_tracks(playlist_result.tracks)}), {len(playlist_result.tracks)} songs total", \
+                                    description = f"{utilities.FLAVOR.get('primary_option')} [{result.name}]({query}) ({get_total_length_of_tracks(result.tracks)}), {len(result.tracks)} songs total", \
                                     color = hikari.Color(0xc38ed5)) \
                 .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
                 .set_author(name = f"Multiple songs have been added to the queue.", icon = plugin.app.get_me().avatar_url)
 
-                await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
-                return
-            else: # If "No" was selected, or the interaction times out
-                result = await lavalink.auto_search_tracks(single_url)
-                await lavalink.play(ctx.guild_id, result[0], ctx.author.id)
-                embed = hikari.Embed(title = f"Song requested", description = f"{requested_song}\n\n**The corresponding playlist was not added.**", color = hikari.Color(0xc38ed5))\
-                .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-                .set_author(name = f"The following song has been added to the queue at position {len(node.queue)}.", icon = plugin.app.get_me().avatar_url)
-                await plugin.app.rest.edit_message(channel = ctx.channel_id, message = await initial_response.message(), embed = embed, component = None)
-                return
-    
-        if isinstance(result, lavaplayer.PlayList):
-            await lavalink.add_to_queue(ctx.guild_id, result.tracks, ctx.author.id)
+                # Send the Embed
+                await ctx.respond(embed = embed)
 
-            embed = hikari.Embed(title = f"Playlist added: ", \
-                                 description = f"{utilities.FLAVOR.get('primary_option')} [{result.name}]({query}) ({get_total_length_of_tracks(result.tracks)}), {len(result.tracks)} songs total", \
-                                 color = hikari.Color(0xc38ed5)) \
-            .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-            .set_author(name = f"Multiple songs have been added to the queue.", icon = plugin.app.get_me().avatar_url)
-            await ctx.respond(embed = embed)
-            return 
-        else:
-            await lavalink.play(ctx.guild_id, result[0], ctx.author.id)
-            embed = hikari.Embed(title = f"Song requested:", \
-                                 description = f"{utilities.FLAVOR.get('primary_option')} [{result[0].title}]({result[0].uri}) ({convert_milliseconds(result[0].length)})", \
-                                 color = hikari.Color(0xc38ed5)) \
-            .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
-            .set_author(name = f"The following song has been added to the queue.", icon = plugin.app.get_me().avatar_url)
-            await ctx.respond(embed = embed)
-            return
+            # URL leads to a track that is not part of a playlist
+            else: 
+                await lavalink.play(ctx.guild_id, result[0], ctx.author.id) # Add the track to the queue
+
+                # Embed for Song Requested Message
+                embed = hikari.Embed(title = f"Song requested:", \
+                                    description = f"{utilities.FLAVOR.get('primary_option')} [{result[0].title}]({result[0].uri}) ({convert_milliseconds(result[0].length)})", \
+                                    color = hikari.Color(0xc38ed5)) \
+                .set_footer(text = f"Requested by {ctx.author.username}#{ctx.author.discriminator}", icon = ctx.author.avatar_url)\
+                .set_author(name = f"The following song has been added to the queue.", icon = plugin.app.get_me().avatar_url)
+
+                # Send the Embed
+                await ctx.respond(embed = embed)
 
 async def respond_to_interaction(time_out, unique_id, author):
     try:

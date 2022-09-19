@@ -240,6 +240,12 @@ info
 @lightbulb.command('feedback', 'Got a question, comment, or suggestion? Share it with this command!')
 @lightbulb.implements(lightbulb.SlashCommand, lightbulb.PrefixCommand)
 async def feedback(ctx):
+    with open("blacklist.txt") as f:
+        blacklist = f.read()
+        if str(ctx.author.id) in blacklist:
+            await ctx.respond("You cannot give feedback because you have been blacklisted.", flags = hikari.MessageFlag.EPHEMERAL)
+            return
+
     feedback = sql_functions.fetch_todays_feedback(author_id = ctx.author.id) # Get all the feedback sent by the author today
     if ctx.author.id != 173555466176036864 and feedback and len(feedback) >= utilities.DAILY_FEEDBACK_LIMIT: # Daily Interaction Limit Reached, do not allow further feedback.
         await ctx.respond(content = f"You have reached your maximum feedback limit today. Thanks for your input!", flags = hikari.MessageFlag.EPHEMERAL)

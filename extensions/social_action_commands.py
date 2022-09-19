@@ -8,7 +8,7 @@ from sql_functions import Gif
 import utilities
 
 from bs4 import BeautifulSoup
-import os
+
 plugin = lightbulb.Plugin('social_action_commands')
 
 # Method that extracts a gif from a URL
@@ -31,11 +31,17 @@ def extract_gif_link_from_url(url):
 # Command that allows the user to add a gif/gifs to a certain action
 @plugin.command
 @lightbulb.option('gif_link', 'link(s) of GIF(s) to be added. Add a space between each link!', type = str)
-@lightbulb.option('action_name', 'action to add the GIF to', autocomplete=True)
+@lightbulb.option('category', 'category to add the GIF to', autocomplete=True)
 @lightbulb.command('addgif', 'Add a GIF link for an action command. If you add something sus, you will be blacklisted.', auto_defer = True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def add_gif(ctx):
-    action_name = ctx.options.action_name.lower()
+    with open("blacklist.txt") as f:
+        blacklist = f.read()
+        if str(ctx.author.id) in blacklist:
+            await ctx.respond("You cannot use this command because you have been blacklisted.", flags = hikari.MessageFlag.EPHEMERAL)
+            return
+
+    action_name = ctx.options.category.lower()
     # Check if action name is valid
     if action_name not in list(utilities.ACTIONS.keys()):
         await ctx.respond("Sorry, I couldn't find an action with that name. Please try again! <a:kirbydeeono:1011803865164816384>")
@@ -72,10 +78,14 @@ async def add_gif(ctx):
     if len(broken_gif_links) > 0:
         response += f"\n\nThe following URL(s) could not be added:\n{broken_gif_links_string}\nPlease check to make sure the URLs are valid and try again! <a:kirbydeeono:1011803865164816384>"  
 
+    await plugin.app.rest.create_message(channel = 1020840225859186719, content = f"`{ctx.author.username}#{ctx.author.discriminator} ({ctx.author.id})` just added the following GIFs to `{action_name}`: {added_links_string}")
     await ctx.respond(response)
 
-@plugin.command 
-@lightbulb.option('user', 'Mention the user you want to bonk!', type = hikari.User)
+@plugin.command
+@lightbulb.option('user4', 'Mention the fourth user you want to receive the action!', type = hikari.User, required = False)
+@lightbulb.option('user3', 'Mention the third user you want to receive the action!', type = hikari.User, required = False)
+@lightbulb.option('user2', 'Mention the second user you want to receive the action!', type = hikari.User, required = False)
+@lightbulb.option('user', 'Mention the user you want to receive the action!', type = hikari.User)
 @lightbulb.option('action_name', "Choose the action you want to use!", autocomplete=True)
 @lightbulb.command('action', 'Get a random anime GIF of an action and direct it at another user!')
 @lightbulb.implements(lightbulb.SlashCommand)
@@ -87,9 +97,25 @@ async def action(ctx):
         return
 
     actor = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = ctx.author)
-    recipient = await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = ctx.options.user)
 
-    action_string = utilities.ACTIONS.get(action_name).format(recipient = recipient.mention, actor = actor.mention)
+    users = [ctx.options.user, ctx.options.user2, ctx.options.user3, ctx.options.user4] # Get all options
+    recipients = [] # Store specified user mentions
+    for user in users:
+        if user:
+            mention = (await plugin.app.rest.fetch_member(guild = ctx.guild_id, user = user)).mention
+            if mention not in recipients:
+                recipients.append(mention)
+            
+    recipient_string = ""
+    if len(recipients) == 1:
+        recipient_string = recipients[0]
+    else:
+        for i in range(0,len(recipients) - 1):
+            recipient_string += f"{recipients[i]}, "
+        
+        recipient_string += f"and {recipients[len(recipients) - 1]}"
+
+    action_string = utilities.ACTIONS.get(action_name).format(recipient = recipient_string, actor = actor.mention)
 
     gif = Gif.get_random_gif(action_name = action_name)
     embed = hikari.Embed(color = hikari.Color(0xc38ed5)).set_image(gif.link)
@@ -113,10 +139,16 @@ async def action(ctx):
 
     await ctx.respond(content = gif_info, component = buttons, flags = hikari.MessageFlag.EPHEMERAL)
 
-    if recipient.id == 1009180210823970956: # a quirky response if an action is done to Aru.
+    if ctx.options.user.id == 1009180210823970956: # a quirky response if an action is done to Aru.
         await ctx.respond(attachment = 'images/action_response.png')
 
     while (event := (await response_to_interaction(30, unique_id))) != -1:
+        with open("blacklist.txt") as f:
+            blacklist = f.read()
+            if str(ctx.author.id) in blacklist:
+                await ctx.respond("You cannot give feedback because you have been blacklisted.", flags = hikari.MessageFlag.EPHEMERAL)
+                return
+
         if event.interaction.custom_id.split("|")[0] == "upvote":
             sql_functions.add_feedback(feedback_type = "upvote", author_id = ctx.author.id, info = gif.link)
             gif.incr_likes()
@@ -172,7 +204,7 @@ async def action(ctx):
                 await ctx.interaction.edit_initial_response(content = content, embed = None, component = None)
                 await plugin.app.rest.delete_message(channel = ctx.channel_id, message = msg)
 
-@add_gif.autocomplete("action_name")
+@add_gif.autocomplete("category")
 @action.autocomplete("action_name")
 async def action_autocomplete(opt: hikari.AutocompleteInteractionOption, inter: hikari.AutocompleteInteraction) -> None:
     matching = []
