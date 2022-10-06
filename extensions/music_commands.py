@@ -17,9 +17,22 @@ async def on_start(event: hikari.StartedEvent):
     lavalink.set_user_id(plugin.app.get_me().id)
     lavalink.set_event_loop(asyncio.get_event_loop())
     lavalink.connect()
+
 @plugin.listener(hikari.VoiceStateUpdateEvent) # Update Lavalink node on voice state update
 async def voice_state_update(event):
+    
     await lavalink.raw_voice_state_update(event.guild_id, event.state.user_id, event.state.session_id, event.state.channel_id)
+
+    # Leave if there is no one else in the voice channel
+    voice_state = plugin.app.cache.get_voice_state(event.guild_id, plugin.app.get_me())
+    if(voice_state):
+        voice_channel_id = voice_state.channel_id
+        voice_states = plugin.app.cache.get_voice_states_view_for_channel(event.guild_id, voice_channel_id).values()
+        other_users = filter(lambda user: not user.member.is_bot, voice_states) # look for users that are not bots
+        num_users_in_vc = len(list(other_users))
+        if(num_users_in_vc == 0):
+            await plugin.app.update_voice_state(event.guild_id, None)
+
 @plugin.listener(hikari.VoiceServerUpdateEvent) # Update Lavalink node when on voice server update
 async def voice_server_update(event):
     await lavalink.raw_voice_server_update(event.guild_id, event.endpoint, event.token)
@@ -64,7 +77,7 @@ async def try_join(ctx, states):
     return channel_id
 
 @plugin.command
-@lightbulb.command("join", "[🎵 ] Join your voice channel.")
+@lightbulb.command("join", "[🎵] Join your voice channel.")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def join(ctx):
     states = plugin.app.cache.get_voice_states_view_for_guild(ctx.guild_id)
@@ -76,7 +89,7 @@ async def join(ctx):
 
 @plugin.command
 @lightbulb.option("query", "Search a song or input a link! (YouTube, Spotify, Soundcloud, Bandcamp, Twitch, and Vimeo supported)")
-@lightbulb.command("play", "[🎵 ] Play a song or playlist!", aliases=["p"], auto_defer = True)
+@lightbulb.command("play", "[🎵] Play a song or playlist!", aliases=["p"], auto_defer = True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def play(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -259,7 +272,7 @@ async def respond_to_interaction(time_out, unique_id, author):
         return int(custom_id[1]) # Return page number corresponding to button
 
 @plugin.command
-@lightbulb.command("pause", "[🎵 ] Pause the current song!")
+@lightbulb.command("pause", "[🎵] Pause the current song!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def pause(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -275,7 +288,7 @@ async def pause(ctx):
     await ctx.respond("Music paused!")
 
 @plugin.command
-@lightbulb.command("resume", "[🎵 ] Resume playing the current song!")
+@lightbulb.command("resume", "[🎵] Resume playing the current song!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def resume(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -290,7 +303,7 @@ async def resume(ctx):
     await ctx.respond("Music resumed!")
 
 @plugin.command
-@lightbulb.command("stop", "[🎵 ] Stop the player and clear the queue!")
+@lightbulb.command("stop", "[🎵] Stop the player and clear the queue!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def stop(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -302,7 +315,7 @@ async def stop(ctx):
     await ctx.respond("Stopped the player and cleared the queue.")
 
 @plugin.command
-@lightbulb.command("skip", "[🎵 ] Skip the current song!")
+@lightbulb.command("skip", "[🎵] Skip the current song!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def skip(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -314,7 +327,7 @@ async def skip(ctx):
 
 @plugin.command
 @lightbulb.option("position", "Position to seek (Format: mm:ss or hh:mm:ss)")
-@lightbulb.command("seek", "[🎵 ] Seek a position in the song!")
+@lightbulb.command("seek", "[🎵] Seek a position in the song!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def seek(ctx): # Convert input to milliseconds
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -337,7 +350,7 @@ async def seek(ctx): # Convert input to milliseconds
     await ctx.respond(f"Position `{ctx.options.position}` seeked!")
 
 @plugin.command
-@lightbulb.command("queue", "[🎵 ] Display the current queue", auto_defer = True)
+@lightbulb.command("queue", "[🎵] Display the current queue", auto_defer = True)
 @lightbulb.implements(lightbulb.SlashCommand)
 async def queue(ctx):
     # Check node and queue and return if either are None
@@ -404,7 +417,7 @@ async def queue(ctx):
 @plugin.command
 @lightbulb.option("new_position", "The new queue position you want to move the song to. (1-based indexing)")
 @lightbulb.option("current_position", "The current queue position of the song you wish to move. (1-based indexing)")
-@lightbulb.command("move", "[🎵 ] Move a song to a new position in the queue.")
+@lightbulb.command("move", "[🎵] Move a song to a new position in the queue.")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def move(ctx):
     position = int(ctx.options.current_position) - 1
@@ -436,7 +449,7 @@ async def move(ctx):
 
 @plugin.command
 @lightbulb.option("position", "The queue position of the song you wish to remove. (1-based indexing)")
-@lightbulb.command("remove", "[🎵 ] Remove a song from the queue.")
+@lightbulb.command("remove", "[🎵] Remove a song from the queue.")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def remove(ctx):
     position = int(ctx.options.position) - 1
@@ -465,7 +478,7 @@ async def remove(ctx):
     await ctx.respond(embed = embed)
 
 @plugin.command
-@lightbulb.command("np", "[🎵 ] Check what song is currently playing.")
+@lightbulb.command("np", "[🎵] Check what song is currently playing.")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def np_command(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -475,7 +488,7 @@ async def np_command(ctx):
     await ctx.respond(f"[{node.queue[0].title}]({node.queue[0].uri})")
 
 @plugin.command
-@lightbulb.command("loop", "[🎵 ] Toggle loop mode on/off", aliases=["l", "repeat"])
+@lightbulb.command("loop", "[🎵] Toggle loop mode on/off", aliases=["l", "repeat"])
 @lightbulb.implements(lightbulb.SlashCommand)
 async def loop_command(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -491,7 +504,7 @@ async def loop_command(ctx):
     await ctx.respond("Stopped looping this song.")
 
 @plugin.command
-@lightbulb.command("loopqueue", "[🎵 ] Toggle loop queue mode on/off.", aliases=["lq", "repeat_queue", "repeat_q"])
+@lightbulb.command("loopqueue", "[🎵] Toggle loop queue mode on/off.", aliases=["lq", "repeat_queue", "repeat_q"])
 @lightbulb.implements(lightbulb.SlashCommand)
 async def loop_queue_command(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -507,7 +520,7 @@ async def loop_queue_command(ctx):
     await ctx.respond("Stopped looping the queue.")
 
 @plugin.command
-@lightbulb.command("shuffle", "[🎵 ] Shuffle the queue!")
+@lightbulb.command("shuffle", "[🎵] Shuffle the queue!")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def shuffle_command(ctx):
     node = await lavalink.get_guild_node(ctx.guild_id)
@@ -518,7 +531,7 @@ async def shuffle_command(ctx):
     await ctx.respond("Shuffled the music!")
 
 @plugin.command
-@lightbulb.command("leave", "[🎵 ] Leave the voice channel.")
+@lightbulb.command("leave", "[🎵] Leave the voice channel.")
 @lightbulb.implements(lightbulb.SlashCommand)
 async def leave_command(ctx):
     states = plugin.app.cache.get_voice_states_view_for_guild(ctx.guild_id)

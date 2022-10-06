@@ -2,7 +2,7 @@ import hikari
 import lightbulb
 import requests
 import uuid
-
+import random
 import sql_functions
 from sql_functions import Gif
 import utilities
@@ -81,6 +81,37 @@ async def add_gif(ctx):
     await plugin.app.rest.create_message(channel = 1020840225859186719, content = f"`{ctx.author.username}#{ctx.author.discriminator} ({ctx.author.id})` just added the following GIFs to `{action_name}`: {added_links_string}")
     await ctx.respond(response)
 
+
+def aru_response(action):
+    harmfulActions = ['bonk', 'kick', 'punch', 'shoot', 'slap', 'yeet']
+    otherActions = {
+        "blush": "... Why are you looking at me like that?",
+        "cuddle": "A-ah, you're a little too close...",
+        "highfive": "Highfive!",
+        "holdhands": "AH! Please don't touch me. I'm sorry!",
+        "hug": "Are you okay? ❤️ I'm here for you.",
+        "kiss": "AH!! LET'S NOT!",
+        "laugh": "Why are you laughing at me? :anger:",
+        "nom": "Get off of me... :anger:",
+        "nuzzle": "Fine, but only once. Got it? :anger:",
+        "pat": "Please don't touch me... :anger:",
+        "poke": "What do you want? :anger:",
+        "stare": "... Uhh, why are you looking at me like that?",
+        "tuckin": "Uh... Thank you, but I'm not sleeping anytime soon.",
+        "wink": "... Why are you winking at me?"
+    }
+
+    if(action in harmfulActions):
+        response1 = "Aaah! Don't hurt me!"
+        response2 = "YOU WANT A PIECE OF ME?! 🤬"
+        response = random.choice([response1, response2])
+
+    else:
+        response = otherActions.get(action, "Don't touch me... :anger:")
+
+    return response
+
+
 @plugin.command
 @lightbulb.option('user4', 'Mention the fourth user you want to receive the action!', type = hikari.User, required = False)
 @lightbulb.option('user3', 'Mention the third user you want to receive the action!', type = hikari.User, required = False)
@@ -140,7 +171,7 @@ async def action(ctx):
     await ctx.respond(content = gif_info, component = buttons, flags = hikari.MessageFlag.EPHEMERAL)
 
     if ctx.options.user.id == 1009180210823970956: # a quirky response if an action is done to Aru.
-        await ctx.respond(attachment = 'images/action_response.png')
+        await plugin.app.rest.create_message(channel = ctx.channel_id, content = aru_response(action_name), reply = msg)
 
     while (event := (await response_to_interaction(30, unique_id))) != -1:
         with open("blacklist.txt") as f:
