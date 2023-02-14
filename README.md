@@ -3,7 +3,8 @@ This is my Discord Bot, Aru!
 
 Made by me, cookie#0837, on Discord. Feel free to add me and ask me any questions you might have about my bot.
 
-[Invite Aru](https://discord.com/api/oauth2/authorize?client_id=1009180210823970956&permissions=8&scope=applications.commands%20bot) to your server!
+~~[Invite Aru](https://discord.com/api/oauth2/authorize?client_id=1009180210823970956&permissions=8&scope=applications.commands%20bot) to your server!~~
+Many of Aru's commands are now broken / outdated due to changes in Discord's API, but some functions still work (like Action Commands). I'll be working on a new bot soon, so if you've enjoyed using Aru, thank you for your support and please look forward to my next project!
 
 ## What does Aru do?
 Aru is an aesthetic, anime-themed multi-purpose Discord bot with "action" commands, music commands, info commands, and more!
